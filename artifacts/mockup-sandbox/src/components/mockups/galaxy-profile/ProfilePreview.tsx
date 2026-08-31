@@ -2,9 +2,9 @@ import {
   Backpack,
   ChevronRight,
   CircleHelp,
-  Coins,
   Copy,
   Crown,
+  Gem,
   HandCoins,
   Home,
   MessageCircle,
@@ -27,9 +27,9 @@ const quickActions = [
 
 const tools = [
   { label: "Host Request", icon: Mic2 },
-  { label: "Demo Agency", icon: UsersRound },
-  { label: "Demo Host", icon: UserRound },
-  { label: "Coin Trading", icon: HandCoins },
+  { label: "Agency", icon: UsersRound },
+  { label: "Host", icon: UserRound },
+  { label: "Diamond Trading", icon: HandCoins },
   { label: "Level", icon: Crown },
   { label: "My QR Code", icon: QrCode },
   { label: "Help", icon: CircleHelp },
@@ -381,11 +381,11 @@ export function ProfilePreview() {
 
         <section className="gxp-coins">
           <span className="gxp-coin">
-            <Coins size={26} strokeWidth={2.1} />
+            <Gem size={26} strokeWidth={2.1} />
             <Sparkles className="gxp-star" size={12} fill="currentColor" />
           </span>
           <span className="gxp-coins-copy">
-            <span>Available My Coins</span>
+            <span>Available My Diamonds</span>
             <strong>5000.00</strong>
           </span>
           <DoubleChevron />

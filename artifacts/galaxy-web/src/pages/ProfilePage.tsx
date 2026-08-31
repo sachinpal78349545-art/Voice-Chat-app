@@ -2,13 +2,12 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { signOut } from "firebase/auth";
 import { auth, db, storage } from "../lib/firebase";
-import { ref, onValue, off } from "firebase/database";
 import {
   Backpack,
   ChevronRight,
-  Coins,
   Copy,
   Crown,
+  Gem,
   HandCoins,
   HelpCircle,
   Mic2,
@@ -50,6 +49,17 @@ interface Props {
   onAdminRecharge?: () => void;
   onOpenSubPage?: (pageId: string) => void;
   onCloseSubPage?: () => void;
+}
+
+function getProfileAge(birthday: string): string {
+  if (!birthday) return "—";
+  const birthDate = new Date(birthday);
+  if (Number.isNaN(birthDate.getTime())) return "—";
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDelta = today.getMonth() - birthDate.getMonth();
+  if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < birthDate.getDate())) age -= 1;
+  return age >= 0 ? String(age) : "—";
 }
 
 function BottomSheet({ children, onClose: _onClose }: { children: React.ReactNode; onClose: () => void }) {
@@ -122,7 +132,6 @@ export default function ProfilePage({
   const [followerLoading, setFollowerLoading] = useState(false);
   const [followingLoading, setFollowingLoading] = useState(false);
   const [viewingProfile, setViewingProfile] = useState<UserProfile | null>(null);
-  const [momentCount, setMomentCount] = useState(0);
   const [reportReason, setReportReason] = useState("");
   const [reportDetails, setReportDetails] = useState("");
   const [reportTarget, setReportTarget] = useState("");
@@ -299,20 +308,6 @@ export default function ProfilePage({
       })();
     }
   }, [isAdmin, user.uid, ormLoaded]);
-
-  useEffect(() => {
-    const momentsRef = ref(db, "moments");
-    onValue(momentsRef, (snap) => {
-      if (!snap.exists()) {
-        setMomentCount(0);
-        return;
-      }
-      const val = snap.val();
-      const count = Object.values(val).filter((m: any) => m.uid === user.uid).length;
-      setMomentCount(count);
-    });
-    return () => off(momentsRef);
-  }, [user.uid]);
 
   useEffect(() => {
     const unsub = subscribeFriendRequests(user.uid, setFriendRequests);
@@ -638,9 +633,9 @@ export default function ProfilePage({
 
   const TOOL_ACTIONS = [
     { label: "Host Request", icon: Mic2, action: () => handleMenu("apply") },
-    { label: "Demo Agency", icon: UsersRound, action: () => handleMenu("family") },
-    { label: "Demo Host", icon: UserRound, action: () => handleMenu("apply") },
-    { label: "Coin Trading", icon: HandCoins, action: () => handleMenu("wallet") },
+    { label: "Agency", icon: UsersRound, action: () => handleMenu("family") },
+    { label: "Host", icon: UserRound, action: () => handleMenu("apply") },
+    { label: "Diamond Trading", icon: HandCoins, action: () => handleMenu("wallet") },
     { label: "Level", icon: Crown, action: () => setShowLevelPage(true) },
     { label: "My QR Code", icon: QrCode, action: () => showToast("QR code coming soon", "info") },
     { label: "Help", icon: HelpCircle, action: () => handleMenu("help") },
@@ -661,6 +656,9 @@ export default function ProfilePage({
   if (showStorePage) {
     return <StorePage user={user} onBack={() => setShowStorePage(false)} onUpdate={onUpdate} />;
   }
+
+  const avatarIsImage = user.avatar?.startsWith("http") || user.avatar?.startsWith("data:");
+  const profileAge = getProfileAge(user.birthday);
 
   // ---------- MAIN RENDER ----------
   return (
@@ -690,7 +688,7 @@ export default function ProfilePage({
                 <SuperAdminAvatar src={user.avatar} userId={user.userId || ""} size={76} onClick={onEditProfile} />
               ) : user.equippedFrame === "fantasy_gold_frame" ? (
                 <FantasyFrame size={76} variant="gold" animated>
-                  {user.avatar?.startsWith("http") ? (
+                  {avatarIsImage ? (
                     <img
                       src={user.avatar}
                       alt=""
@@ -705,10 +703,10 @@ export default function ProfilePage({
                       }}
                     />
                   ) : (
-                    <span className="profile-avatar-fallback">{user.name?.slice(0, 2).toUpperCase() || "GR"}</span>
+                    <span className="profile-avatar-fallback">{user.avatar || user.name?.slice(0, 2).toUpperCase() || "GR"}</span>
                   )}
                 </FantasyFrame>
-              ) : user.avatar?.startsWith?.("http") ? (
+              ) : avatarIsImage ? (
                 <img
                   src={user.avatar}
                   alt={`${user.name || "Galaxy Rider"} profile`}
@@ -723,7 +721,7 @@ export default function ProfilePage({
                   }}
                 />
               ) : (
-                <span className="profile-avatar-fallback">{user.name?.slice(0, 2).toUpperCase() || "GR"}</span>
+                <span className="profile-avatar-fallback">{user.avatar || user.name?.slice(0, 2).toUpperCase() || "GR"}</span>
               )}
             </div>
           </div>
@@ -734,9 +732,9 @@ export default function ProfilePage({
           <h2>{user.name || "Galaxy Rider"}</h2>
           <div className="profile-meta-row">
             <span className="profile-gender-badge">
-              {user.gender === "Female" ? "♀" : "♂"} {user.gender || "Male"}
+              {user.gender === "Female" ? "♀" : user.gender === "Male" ? "♂" : "•"} {user.gender || "—"}
             </span>
-            <span className="profile-age">18</span>
+            <span className="profile-age">{profileAge}</span>
             <button className="profile-level-chip" onClick={() => setShowLevelPage(true)}>
               <Sparkles size={12} /> Lv.{user.level || 1}
             </button>
@@ -753,10 +751,10 @@ export default function ProfilePage({
 
       <section className="profile-card profile-stats-card" aria-label="Profile statistics">
         {[
-          { label: "Friend", value: user.friendsList?.length || 0 },
-          { label: "Follow", value: user.following || 0, action: () => { setShowFollowingList(true); loadFollowing(); } },
-          { label: "Followers", value: user.followers || 0, action: () => { setShowFollowersList(true); loadFollowers(); } },
-          { label: "Visitors", value: user.visitors || momentCount },
+          { label: "Friend", value: user.friendsCount ?? user.friends ?? user.friendsList?.length ?? 0 },
+          { label: "Follow", value: user.following ?? 0, action: () => { setShowFollowingList(true); loadFollowing(); } },
+          { label: "Followers", value: user.followers ?? 0, action: () => { setShowFollowersList(true); loadFollowers(); } },
+          { label: "Visitors", value: user.visitors ?? user.visitorsCount ?? 0 },
         ].map((stat) => (
           <button key={stat.label} className="profile-stat" onClick={stat.action}>
             <strong>{stat.value}</strong>
@@ -766,9 +764,9 @@ export default function ProfilePage({
       </section>
 
       <button className="profile-coins-card" onClick={onRecharge} aria-label="Open wallet">
-        <span className="profile-coin-icon"><Coins size={26} strokeWidth={2.1} /><Sparkles className="profile-coin-star" size={12} fill="currentColor" /></span>
+        <span className="profile-coin-icon"><Gem size={26} strokeWidth={2.1} /><Sparkles className="profile-coin-star" size={12} fill="currentColor" /></span>
         <span className="profile-coins-copy">
-          <span>Available My Coins</span>
+          <span>Available My Diamonds</span>
           <strong>{(user.coins || 0).toFixed(2)}</strong>
         </span>
         <span className="profile-coins-double-arrow" aria-hidden="true">

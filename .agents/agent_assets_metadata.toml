@@ -213,3 +213,17 @@ mtime_ms = 1788183769984
 storage_uri = "gcs://replit-rams-assets-sisko/rams/assets/repl:c8e713f3-f6b0-444f-b2e8-dab94c2a752a/db366e27-8442-4c82-b9b4-18270396319e/934ff815-8ede-41ef-8465-ba41a219c979"
 storage_version_token = "1788183785427514"
 content_type = "image/jpeg"
+
+[[outputs]]
+id = "C_E6Kd_JCEw_1RoSiRkQO"
+uri = "file://screenshots/galaxy-rider-profile-diamonds.jpg"
+type = "image"
+title = "Updated Diamonds Profile Layout"
+description = "390×844 layout reference showing Diamonds terminology and Agency/Host labels. The live app now fills identity, ID, avatar, counts, and balance from the signed-in Firebase profile."
+logical_id = "1c927481-5e70-4029-bc71-735ce757afd0"
+content_hash = "sha256:598d682f44667199f8301721eb85045ee1a90468c784e0c9dbb30d9887e653d1"
+size = 32181
+mtime_ms = 1788184127844
+storage_uri = "gcs://replit-rams-assets-sisko/rams/assets/repl:c8e713f3-f6b0-444f-b2e8-dab94c2a752a/1c927481-5e70-4029-bc71-735ce757afd0/f4cf0909-b98c-41fb-9b87-190beffb2f58"
+storage_version_token = "1788184184257808"
+content_type = "image/jpeg"
