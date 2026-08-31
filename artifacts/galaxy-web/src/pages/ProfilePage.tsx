@@ -3,6 +3,23 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { signOut } from "firebase/auth";
 import { auth, db, storage } from "../lib/firebase";
 import { ref, onValue, off } from "firebase/database";
+import {
+  Backpack,
+  ChevronRight,
+  Coins,
+  Copy,
+  Crown,
+  HandCoins,
+  HelpCircle,
+  Mic2,
+  QrCode,
+  Settings,
+  Sparkles,
+  Store,
+  Trophy,
+  UserRound,
+  UsersRound,
+} from "lucide-react";
 import { UserProfile, claimDailyReward, getAchievementsList, blockUser, unblockUser, getUser, reportUser, subscribeFriendRequests, respondFriendRequest, FriendRequest, sendFriendRequest, removeFriend, searchUsers, isSuperAdmin, setOfficialRole, removeOfficialRole, getUserByUserId, ensureSuperAdmin, followUser, banUser, unbanUser, isUserBanned, setUserCoins, deleteUserAvatar, resetUserName, deviceBanUser, shadowBanUser, removeShadowBan } from "../lib/userService";
 import { sendGlobalAlert, clearGlobalAlerts } from "../lib/notificationService";
 import { updateRoomSettings, setRoomSeatCount, wipeDummyRooms, setAutoEntryRoom, getAutoEntryRoom, ensureOfficialRoom, ROOM_THEMES } from "../lib/roomService";
@@ -204,8 +221,6 @@ export default function ProfilePage({
   // ---------- ALL HOOKS AND FUNCTIONS ----------
   const achievements = useMemo(() => getAchievementsList(user), [user]);
   const unlockedCount = useMemo(() => achievements.filter((a) => a.unlocked).length, [achievements]);
-  const xpPct = useMemo(() => Math.min(100, (user.xp / (user.level * 1000)) * 100), [user.xp, user.level]);
-
   const openSubPage = useCallback((id: string) => onOpenSubPage?.(id), [onOpenSubPage]);
   const closeSubPage = useCallback(() => onCloseSubPage?.(), [onCloseSubPage]);
 
@@ -614,13 +629,29 @@ export default function ProfilePage({
     }
   };
 
-  const PROFILE_FUNCTIONS = [
-    { icon: "💰", label: "Wallet", color: "#f59e0b", glow: "rgba(245,158,11,0.35)", action: "wallet" },
-    { icon: "🛍️", label: "Store", color: "#a855f7", glow: "rgba(168,85,247,0.35)", action: "store" },
-    { icon: "🎒", label: "Backpack", color: "#ec4899", glow: "rgba(236,72,153,0.35)", action: "backpack" },
-    { icon: "🎤", label: "Be a Host", color: "#FFD700", glow: "rgba(255,215,0,0.35)", action: "apply" },
-    { icon: "💡", label: "Help", color: "#22c55e", glow: "rgba(34,197,94,0.35)", action: "help" },
-    { icon: "💬", label: "Feedback", color: "#06b6d4", glow: "rgba(6,182,212,0.35)", action: "feedback" },
+  const QUICK_ACTIONS = [
+    { label: "Ranking", icon: Trophy, tone: "cream", action: () => setShowLevelPage(true) },
+    { label: "My Store", icon: Store, tone: "peach", action: () => setShowStorePage(true) },
+    { label: "Backpack", icon: Backpack, tone: "pink", action: () => handleMenu("backpack") },
+    { label: "Referral", icon: UsersRound, tone: "rose", action: () => showToast("Referral center coming soon", "info") },
+  ];
+
+  const TOOL_ACTIONS = [
+    { label: "Host Request", icon: Mic2, action: () => handleMenu("apply") },
+    { label: "Demo Agency", icon: UsersRound, action: () => handleMenu("family") },
+    { label: "Demo Host", icon: UserRound, action: () => handleMenu("apply") },
+    { label: "Coin Trading", icon: HandCoins, action: () => handleMenu("wallet") },
+    { label: "Level", icon: Crown, action: () => setShowLevelPage(true) },
+    { label: "My QR Code", icon: QrCode, action: () => showToast("QR code coming soon", "info") },
+    { label: "Help", icon: HelpCircle, action: () => handleMenu("help") },
+    {
+      label: "Settings",
+      icon: Settings,
+      action: () => {
+        openSubPage("settings");
+        setShowSettings(true);
+      },
+    },
   ];
 
   // ---------- CONDITIONAL RENDERS ----------
@@ -633,185 +664,144 @@ export default function ProfilePage({
 
   // ---------- MAIN RENDER ----------
   return (
-    <div className="page-scroll no-screenshot" style={{ background: "#0a0820" }}>
-      <div className="pf-hero">
-        <img
-          src="https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?auto=format&fit=crop&w=1200&q=80"
-          alt=""
-          className="pf-hero-bg-img"
-        />
-        <div className="pf-hero-gradient" />
+    <div className="page-scroll no-screenshot profile-redesign">
+      <header className="profile-header">
+        <div>
+          <p className="profile-kicker">GALAXY RIDER</p>
+          <h1>My Profile</h1>
+        </div>
+        <button
+          className="profile-header-action"
+          aria-label="Open settings"
+          onClick={() => {
+            openSubPage("settings");
+            setShowSettings(true);
+          }}
+        >
+          <Settings size={19} strokeWidth={2.2} />
+        </button>
+      </header>
 
-        <div className="pf-hero-top">
-          <button className="pf-id-glass" onClick={handleCopyId}>
-            <span className="pf-id-text">ID: {user.userId || "N/A"}</span>
-            <span style={{ fontSize: 11 }}>📋</span>
+      <section className="profile-identity-card" aria-label="Profile identity">
+        <div className="profile-avatar-shell" onClick={onEditProfile} role="button" tabIndex={0} onKeyDown={(event) => event.key === "Enter" && onEditProfile()}>
+          <div className="profile-avatar-ring">
+            <div className="profile-avatar-core">
+              {isAdmin ? (
+                <SuperAdminAvatar src={user.avatar} userId={user.userId || ""} size={76} onClick={onEditProfile} />
+              ) : user.equippedFrame === "fantasy_gold_frame" ? (
+                <FantasyFrame size={76} variant="gold" animated>
+                  {user.avatar?.startsWith("http") ? (
+                    <img
+                      src={user.avatar}
+                      alt=""
+                      className="profile-avatar-image"
+                      onError={(event) => {
+                        const img = event.currentTarget;
+                        img.style.display = "none";
+                        const span = document.createElement("span");
+                        span.className = "profile-avatar-fallback";
+                        span.textContent = user.name?.slice(0, 2).toUpperCase() || "GR";
+                        img.parentElement?.appendChild(span);
+                      }}
+                    />
+                  ) : (
+                    <span className="profile-avatar-fallback">{user.name?.slice(0, 2).toUpperCase() || "GR"}</span>
+                  )}
+                </FantasyFrame>
+              ) : user.avatar?.startsWith?.("http") ? (
+                <img
+                  src={user.avatar}
+                  alt={`${user.name || "Galaxy Rider"} profile`}
+                  className="profile-avatar-image"
+                  onError={(event) => {
+                    const img = event.currentTarget;
+                    img.style.display = "none";
+                    const span = document.createElement("span");
+                    span.className = "profile-avatar-fallback";
+                    span.textContent = user.name?.slice(0, 2).toUpperCase() || "GR";
+                    img.parentElement?.appendChild(span);
+                  }}
+                />
+              ) : (
+                <span className="profile-avatar-fallback">{user.name?.slice(0, 2).toUpperCase() || "GR"}</span>
+              )}
+            </div>
+          </div>
+          <span className="profile-avatar-status" aria-label="Online" />
+        </div>
+
+        <div className="profile-identity-copy">
+          <h2>{user.name || "Galaxy Rider"}</h2>
+          <div className="profile-meta-row">
+            <span className="profile-gender-badge">
+              {user.gender === "Female" ? "♀" : "♂"} {user.gender || "Male"}
+            </span>
+            <span className="profile-age">18</span>
+            <button className="profile-level-chip" onClick={() => setShowLevelPage(true)}>
+              <Sparkles size={12} /> Lv.{user.level || 1}
+            </button>
+            {user.vip && <span className="profile-vip-chip"><Crown size={11} /> VIP</span>}
+          </div>
+          <button className="profile-id-row" onClick={handleCopyId}>
+            <span>ID: {user.userId || user.uid.slice(0, 9)}</span>
+            <Copy size={13} />
           </button>
-          <button
-            className="pf-settings-btn"
-            onClick={() => {
-              openSubPage("settings");
-              setShowSettings(true);
-            }}
-          >
-            ⚙️
+        </div>
+
+        <ChevronRight className="profile-identity-chevron" size={20} strokeWidth={2} />
+      </section>
+
+      <section className="profile-card profile-stats-card" aria-label="Profile statistics">
+        {[
+          { label: "Friend", value: user.friendsList?.length || 0 },
+          { label: "Follow", value: user.following || 0, action: () => { setShowFollowingList(true); loadFollowing(); } },
+          { label: "Followers", value: user.followers || 0, action: () => { setShowFollowersList(true); loadFollowers(); } },
+          { label: "Visitors", value: user.visitors || momentCount },
+        ].map((stat) => (
+          <button key={stat.label} className="profile-stat" onClick={stat.action}>
+            <strong>{stat.value}</strong>
+            <span>{stat.label}</span>
           </button>
-        </div>
+        ))}
+      </section>
 
-        <div className="pf-avatar-area">
-          <div className="pf-avatar-wrap" onClick={onEditProfile}>
-            <div className="pf-avatar-glow">
-              <div className="pf-avatar-inner">
-                {isAdmin ? (
-                  <SuperAdminAvatar src={user.avatar} userId={user.userId || ""} size={92} onClick={onEditProfile} />
-                ) : user.equippedFrame === "fantasy_gold_frame" ? (
-                  <FantasyFrame size={92} variant="gold" animated>
-                    {user.avatar?.startsWith("http") ? (
-                      <img
-                        src={user.avatar}
-                        alt=""
-                        style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
-                        onError={(e) => {
-                          const img = e.target as HTMLImageElement;
-                          img.style.display = "none";
-                          const span = document.createElement("span");
-                          span.style.fontSize = "28px";
-                          span.style.color = "#fff";
-                          span.textContent = user.name?.slice(0, 2).toUpperCase() || "👤";
-                          img.parentElement!.appendChild(span);
-                        }}
-                      />
-                    ) : (
-                      <span className="pf-avatar-text">{user.name?.slice(0, 2).toUpperCase() || "👤"}</span>
-                    )}
-                  </FantasyFrame>
-                ) : user.avatar?.startsWith?.("http") ? (
-                  <img
-                    src={user.avatar}
-                    alt=""
-                    className="pf-avatar-img"
-                    onError={(e) => {
-                      const img = e.target as HTMLImageElement;
-                      img.style.display = "none";
-                      const span = document.createElement("span");
-                      span.style.fontSize = "28px";
-                      span.style.color = "#fff";
-                      span.textContent = user.name?.slice(0, 2).toUpperCase() || "👤";
-                      img.parentElement!.appendChild(span);
-                    }}
-                  />
-                ) : (
-                  <span className="pf-avatar-text">{user.name?.slice(0, 2).toUpperCase() || "👤"}</span>
-                )}
-              </div>
-            </div>
-            <div className="pf-avatar-edit-badge">✏️</div>
-          </div>
-        </div>
-      </div>
+      <button className="profile-coins-card" onClick={onRecharge} aria-label="Open wallet">
+        <span className="profile-coin-icon"><Coins size={26} strokeWidth={2.1} /><Sparkles className="profile-coin-star" size={12} fill="currentColor" /></span>
+        <span className="profile-coins-copy">
+          <span>Available My Coins</span>
+          <strong>{(user.coins || 0).toFixed(2)}</strong>
+        </span>
+        <span className="profile-coins-double-arrow" aria-hidden="true">
+          <ChevronRight size={22} strokeWidth={2.4} />
+          <ChevronRight size={22} strokeWidth={2.4} />
+        </span>
+      </button>
 
-      <div className="pf-info-block">
-        <h2 className="pf-name">{user.name}</h2>
-        {user.bio && <p className="pf-bio">{user.bio}</p>}
-
-        <div className="pf-badge-line">
-          <span className="pf-pink-badge">18</span>
-          <span className="pf-flag">🇮🇳</span>
-          <span className="pf-grey-pill" onClick={() => setShowLevelPage(true)} style={{ cursor: "pointer" }}>
-            Lv.{user.level}
-          </span>
-          <span className="pf-grey-pill">Diamond</span>
-          {user.vip && <span className="pf-verified-pill">👑</span>}
-          {!isAdmin && user.globalRole === "official" ? (
-            <OfficialBadge size="sm" />
-          ) : (
-            <span className="pf-home-icon">🏠</span>
-          )}
-        </div>
-
-        <div className="pf-stats-row">
-          {[
-            { label: "Following", val: user.following || 0, action: () => { setShowFollowingList(true); loadFollowing(); } },
-            { label: "Followers", val: user.followers || 0, action: () => { setShowFollowersList(true); loadFollowers(); } },
-            { label: "Visitors", val: momentCount, dot: true },
-          ].map((s) => (
-            <div key={s.label} className="pf-stat-btn" onClick={s.action}>
-              <p className="pf-stat-value">{s.val}</p>
-              <p className="pf-stat-label">{s.label}</p>
-              {s.dot && <div className="pf-stat-dot" />}
-            </div>
-          ))}
-        </div>
-
-        <div className="pf-level-badge-row" onClick={() => setShowLevelPage(true)} style={{ cursor: "pointer" }}>
-          <div className="pf-level-badge">
-            <div className="pf-level-badge-core">{user.level}</div>
-            <span className="pf-wing">✦</span>
-          </div>
-          <div style={{ flex: 1 }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                fontSize: 9,
-                color: "rgba(162,155,254,0.4)",
-                marginBottom: 4,
-              }}
-            >
-              <span>Lv.{user.level}</span>
-              <span>{user.xp.toLocaleString()}/{(user.level * 1000).toLocaleString()} XP</span>
-            </div>
-            <div style={{ height: 4, borderRadius: 2, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
-              <div
-                style={{
-                  height: "100%",
-                  borderRadius: 2,
-                  width: `${xpPct}%`,
-                  background: "linear-gradient(90deg, #60a5fa, #a78bfa)",
-                  transition: "width 0.5s",
-                }}
-              />
-            </div>
-          </div>
-          <span className="pf-chevron">›</span>
-        </div>
-      </div>
-
-      <div className="pf-functions-section">
-        <p className="pf-section-title">Functions</p>
-        <div className="pf-func-grid">
-          {PROFILE_FUNCTIONS.map((item) => (
-            <button key={item.label} className="pf-func-card" onClick={() => handleMenu(item.action)}>
-              <div
-                className="pf-func-bubble"
-                style={{
-                  background: `radial-gradient(circle at 30% 25%, ${item.color}33, ${item.color}0d 60%, transparent 100%), linear-gradient(135deg, rgba(255,255,255,0.05), rgba(0,0,0,0.2))`,
-                  borderColor: `${item.color}55`,
-                  boxShadow: `0 0 18px ${item.glow}, inset 0 1px 0 rgba(255,255,255,0.12)`,
-                }}
-              >
-                <span className="pf-func-icon" style={{ filter: `drop-shadow(0 0 6px ${item.glow})` }}>
-                  {item.icon}
-                </span>
-              </div>
-              <span className="pf-func-label">{item.label}</span>
+      <section className="profile-card profile-section-card" aria-labelledby="quick-actions-title">
+        <h3 id="quick-actions-title">Quick Actions</h3>
+        <div className="profile-quick-grid">
+          {QUICK_ACTIONS.map(({ label, icon: Icon, tone, action }) => (
+            <button key={label} className="profile-quick-item" onClick={action}>
+              <span className={`profile-quick-icon ${tone}`}><Icon size={20} strokeWidth={1.9} /></span>
+              <span>{label}</span>
             </button>
           ))}
         </div>
-      </div>
+      </section>
 
-      <div style={{ padding: "0 16px", paddingBottom: 100 }}>
-        <p
-          style={{
-            textAlign: "center",
-            fontSize: 9,
-            color: "rgba(139,122,170,0.2)",
-            padding: "16px 0",
-          }}
-        >
-          Galaxy Voice Chat v2.0 · UID: {user.uid.slice(0, 10).toUpperCase()}
-        </p>
-      </div>
+      <section className="profile-card profile-section-card profile-tools-card" aria-labelledby="tools-title">
+        <h3 id="tools-title">Tools</h3>
+        <div className="profile-tools-grid">
+          {TOOL_ACTIONS.map(({ label, icon: Icon, action }) => (
+            <button key={label} className="profile-tool-item" onClick={action}>
+              <span className="profile-tool-icon"><Icon size={20} strokeWidth={1.8} /></span>
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <div className="profile-footer-space" />
 
       {/* ===== SETTINGS ===== */}
       {showSettings && (

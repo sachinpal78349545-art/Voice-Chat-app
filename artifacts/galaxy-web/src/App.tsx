@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { onAuthStateChanged, User as FBUser, getRedirectResult, signOut } from "firebase/auth";
 import { auth } from "./lib/firebase";
+import { Compass, Home, MessageCircle, Mic2, UserRound } from "lucide-react";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { UserProfile, initUser, subscribeUser, setupOnlinePresence, claimDailyReward, isUserBanned, getBanTimeRemaining } from "./lib/userService";
 import { Room, subscribeMaintenanceMode, getAutoEntryRoom, createRoom } from "./lib/roomService";
@@ -27,11 +28,11 @@ import "./index.css";
 type NavPage = "home" | "rooms" | "chats" | "moment" | "mine" | "notifications" | "search" | "explore" | "recharge" | "admin-recharge";
 
 const NAV = [
-  { id: "home", icon: "\u{1F3E0}", label: "Home" },
-  { id: "explore", icon: "\u{1F30C}", label: "Explore" },
-  { id: "rooms", icon: "\u{1F3A4}", label: "Rooms" },
-  { id: "chats", icon: "\u{1F4AC}", label: "Chats" },
-  { id: "mine", icon: "\u{1F464}", label: "Mine" },
+  { id: "home", icon: Home, label: "Home" },
+  { id: "explore", icon: Compass, label: "Explore" },
+  { id: "rooms", icon: Mic2, label: "Rooms" },
+  { id: "chats", icon: MessageCircle, label: "Chats" },
+  { id: "mine", icon: UserRound, label: "Mine" },
 ] as const;
 
 function SplashScreen({ onDone }: { onDone: () => void }) {
@@ -507,7 +508,7 @@ function AppInner() {
                 onClick={() => changePage(item.id as NavPage)}
               >
                 <span className="nav-icon" style={{ position: "relative" }}>
-                  {item.icon}
+                  <item.icon size={20} strokeWidth={2.1} />
                   {item.id === "chats" && profile && <ChatBadge uid={profile.uid} />}
                 </span>
                 <span className="nav-label">{item.label}</span>
