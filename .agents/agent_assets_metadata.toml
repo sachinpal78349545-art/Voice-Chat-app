@@ -199,3 +199,17 @@ mtime_ms = 1787221259550
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:5d527b40-679d-49cc-ac34-ddd2deff3b57/ae69e3c2-83df-44b4-8cb7-e39619895c44/a839291b-c09b-4b0d-90d1-4d9161cf64f2"
 storage_version_token = "1787221292299155"
 content_type = "image/gif"
+
+[[outputs]]
+id = "btO6z0Ow1Gu4H-2NipkMU"
+uri = "file://screenshots/galaxy-rider-profile-preview.jpg"
+type = "image"
+title = "Galaxy Rider Profile Preview"
+description = "390×844 mobile preview of the updated Galaxy Rider My Profile screen."
+logical_id = "db366e27-8442-4c82-b9b4-18270396319e"
+content_hash = "sha256:6483ac5a12396f8c7972ab77da77525e452a0267af41fa5137651b231e3c4ae6"
+size = 32222
+mtime_ms = 1788183769984
+storage_uri = "gcs://replit-rams-assets-sisko/rams/assets/repl:c8e713f3-f6b0-444f-b2e8-dab94c2a752a/db366e27-8442-4c82-b9b4-18270396319e/934ff815-8ede-41ef-8465-ba41a219c979"
+storage_version_token = "1788183785427514"
+content_type = "image/jpeg"
