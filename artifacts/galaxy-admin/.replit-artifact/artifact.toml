@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/galaxy-admin/"
+title = "Galaxy Admin Panel"
+description = "The imported Galaxy Voice Chat administration panel for managing users, rooms, reports, gifts, settings, and moderation."
+version = "1.0.0"
+id = "artifacts/galaxy-admin"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/galaxy-admin/" ]
+localPort = 20257
+
+[services.development]
+run = "pnpm --filter @workspace/galaxy-admin run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/galaxy-admin", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/galaxy-admin/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20257"
+BASE_PATH = "/galaxy-admin/"

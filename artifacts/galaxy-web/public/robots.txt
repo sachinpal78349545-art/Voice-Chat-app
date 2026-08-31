@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://galaxy-voice-chat-galaxy-web.vercel.app/sitemap.xml

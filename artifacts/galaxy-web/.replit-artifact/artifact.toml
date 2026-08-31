@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Galaxy Voice Chat Web"
+description = "The imported Galaxy Voice Chat web application for real-time voice rooms, chat, profiles, social features, games, and virtual gifts."
+version = "1.0.0"
+id = "artifacts/galaxy-web"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24090
+
+[services.development]
+run = "pnpm --filter @workspace/galaxy-web run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/galaxy-web", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/galaxy-web/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24090"
+BASE_PATH = "/"

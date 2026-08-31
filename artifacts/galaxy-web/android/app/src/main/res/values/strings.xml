@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Galaxy Voice Chat</string>
+    <string name="title_activity_main">Galaxy Voice Chat</string>
+    <string name="package_name">com.galaxy.voicechat</string>
+    <string name="custom_url_scheme">com.galaxy.voicechat</string>
+</resources>

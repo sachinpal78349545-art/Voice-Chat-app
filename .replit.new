@@ -1,0 +1,77 @@
+modules = ["nodejs-20", "web", "java-graalvm22.3", "python-base-3.13"]
+
+[[artifacts]]
+id = "artifacts/api-server"
+
+[[artifacts]]
+id = "artifacts/mockup-sandbox"
+
+[[artifacts]]
+id = "artifacts/galaxy-web"
+
+[deployment]
+router = "application"
+deploymentTarget = "autoscale"
+
+[deployment.postBuild]
+args = ["pnpm", "store", "prune"]
+env = { "CI" = "true" }
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Galaxy Web Preview"
+
+[[workflows.workflow]]
+name = "Galaxy Web Preview"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=5173 BASE_PATH=/ pnpm --filter @workspace/galaxy-web run dev"
+waitForPort = 5173
+
+[agent]
+stack = "PNPM_WORKSPACE"
+expertMode = true
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 20000
+
+[userenv]
+
+[userenv.shared]
+VITE_ADMIN_USERNAME = "galaxy@4334"
+VITE_ADMIN_PASSWORD = "sachin@1244"
+VITE_FIREBASE_API_KEY = "AIzaSyACJvjNecVmc-ooULC99pjlu6slWiQz_3o"
+VITE_FIREBASE_APP_ID = "1:767922030084:web:f8f1664a9685832faf5751"
+VITE_FIREBASE_AUTH_DOMAIN = "chalotalk-67106.firebaseapp.com"
+VITE_FIREBASE_DATABASE_URL = "https://chalotalk-67106-default-rtdb.firebaseio.com"
+VITE_FIREBASE_MEASUREMENT_ID = "G-QV3K0F55YZ"
+VITE_FIREBASE_MESSAGING_SENDER_ID = "767922030084"
+VITE_FIREBASE_PROJECT_ID = "chalotalk-67106"
+VITE_FIREBASE_STORAGE_BUCKET = "chalotalk-67106.firebasestorage.app"
+
+[nix]
+packages = ["jre_minimal", "zip"]
+channel = "stable-25_05"
+
+[objectStorage]
+defaultBucketID = "replit-objstore-b815cc6e-beec-4716-9d9d-2e434873d96c"
+
+[[ports]]
+localPort = 20257
+
+[[ports]]
+localPort = 24090

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 28" fill="none">
+  <defs>
+    <linearGradient id="wg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#FFD700" stop-opacity="0"/>
+      <stop offset="20%" stop-color="#FFD700" stop-opacity="0.3"/>
+      <stop offset="50%" stop-color="#FFA500" stop-opacity="0.4"/>
+      <stop offset="80%" stop-color="#FFD700" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#FFD700" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="wb" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#FFD700" stop-opacity="0"/>
+      <stop offset="15%" stop-color="#FFD700"/>
+      <stop offset="85%" stop-color="#FFD700"/>
+      <stop offset="100%" stop-color="#FFD700" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <path d="M0 14 Q15 6, 30 10 L40 10 L40 18 L30 18 Q15 22, 0 14Z" fill="url(#wg)"/>
+  <path d="M120 14 Q105 6, 90 10 L80 10 L80 18 L90 18 Q105 22, 120 14Z" fill="url(#wg)"/>
+  <rect x="30" y="6" width="60" height="16" rx="8" fill="rgba(255,215,0,0.12)" stroke="url(#wb)" stroke-width="1"/>
+  <text x="60" y="18" text-anchor="middle" fill="#FFD700" font-size="9" font-weight="800" font-family="sans-serif">OFFICIAL</text>
+</svg>

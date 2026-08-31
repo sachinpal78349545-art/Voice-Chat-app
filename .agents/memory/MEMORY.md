@@ -1,0 +1,3 @@
+- [Capacitor tar ESM fix](capacitor-tar-fix.md) — @capacitor/cli v5 fails with tar v7 (ESM) in pnpm monorepos; requires patching template.js and adding tar to devDeps.
+- [Galaxy project setup](galaxy-setup.md) — tar blocked by package firewall; Capacitor packages removed from root/galaxy-web for dev server; pnpm-lock.yaml deleted and regenerated.
+- [Galaxy feature architecture](galaxy-features.md) — agency/host apply system, demo admin, official host frame, games management — key patterns and Firebase paths.

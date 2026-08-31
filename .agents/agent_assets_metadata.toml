@@ -1,0 +1,201 @@
+uploads = []
+
+[[generated]]
+id = "3vtVmB36V66ZQh_x6cTt9"
+uri = "file://artifacts/galaxy-mobile/assets/images/icon.png"
+type = "image"
+title = "galaxy voice app icon"
+
+[[generated]]
+id = "22IMx1QdEGiv9sVdJIMIv"
+uri = "file://artifacts/galaxy-mobile/assets/images/splash.png"
+type = "image"
+title = "galaxy voice splash screen"
+
+[[generated]]
+id = "ZTbTzhEA3fqGUAN7sVCIZ"
+uri = "file://artifacts/galaxy-web/public/logo.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "0oXrmVCx-s1x5VLhoBBDR"
+uri = "file://artifacts/galaxy-web/public/bg-mystical.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "2NBqDWw2MWxw8jMeYdonN"
+uri = "file://artifacts/galaxy-web/public/banner1.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "EnShBB07lu_ADzMme6iLd"
+uri = "file://artifacts/galaxy-web/public/banner2.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "fe5P9CdLfw5N6Ty51cJxF"
+uri = "file://artifacts/galaxy-web/public/banner3.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "OVnt5zGSGVezjT3Ex8D65"
+uri = "file://artifacts/galaxy-web/public/game_carrom.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "V1CDUJtba9vj3QUIEnIjG"
+uri = "file://artifacts/galaxy-web/public/game_truthdare.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "yzvqtbxwTsmZ8MVibc0lf"
+uri = "file://artifacts/galaxy-web/public/game_candy.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "Gaum9aWfkxngI-7xysELh"
+uri = "file://artifacts/galaxy-web/public/game_ludo.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "HfW8Av3Hh9xiYL7P6HFxg"
+uri = "file://artifacts/galaxy-web/public/boys/boy1.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "VK_CBEPc3_blxSK75MUdk"
+uri = "file://artifacts/galaxy-web/public/boys/boy2.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "pKN4CYpQQuno8mUmWTs-P"
+uri = "file://artifacts/galaxy-web/public/boys/boy3.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "R5bWtG-lkMpS0Lj2_blxo"
+uri = "file://artifacts/galaxy-web/public/boys/boy4.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "inNtYs7LWpPz8SNodBzEw"
+uri = "file://artifacts/galaxy-web/public/boys/boy5.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "kQdBBPb1dwaELbzSpZ1II"
+uri = "file://artifacts/galaxy-web/public/boys/boy6.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "Mv8H6Pq6dAaV_lh1BeuB2"
+uri = "file://artifacts/galaxy-web/public/boys/boy7.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "fQkAQe8blNCO_HywQ6-mt"
+uri = "file://artifacts/galaxy-web/public/boys/boy8.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "vnXaEbjhYjee0ydnwpPg9"
+uri = "file://artifacts/galaxy-web/public/boys/boy9.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "4Ikk3jAb4ktX_WnWMVa0V"
+uri = "file://artifacts/galaxy-web/public/boys/boy10.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "7XX5YG0590f6umw4Zi3qU"
+uri = "file://artifacts/galaxy-web/public/girls/girl1.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "Qa75cRWmgRxzD3G7T9QGP"
+uri = "file://artifacts/galaxy-web/public/girls/girl2.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "XQqJ-sKckZDBlKO16IIpO"
+uri = "file://artifacts/galaxy-web/public/girls/girl3.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "ljDWcEFZ-1bxuJvKfaMdd"
+uri = "file://artifacts/galaxy-web/public/girls/girl4.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "5C_3H7B2VR6A7MOESlb15"
+uri = "file://artifacts/galaxy-web/public/girls/girl5.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "_W10wQ2PTP-Px2u2SQW5v"
+uri = "file://artifacts/galaxy-web/public/girls/girl6.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "gxi8HA6ZgZ3Sat50mQSou"
+uri = "file://artifacts/galaxy-web/public/girls/girl7.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "CAwNyOmBnGnpPAPgdsG7V"
+uri = "file://artifacts/galaxy-web/public/girls/girl8.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "8kmeQ9-OYp0HTYSNy4NQC"
+uri = "file://artifacts/galaxy-web/public/girls/girl9.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "nSEgmMHI2XuqQi6FVNcPB"
+uri = "file://artifacts/galaxy-web/public/girls/girl10.png"
+type = "image"
+title = "generated_image"
+
+[[outputs]]
+id = "PT0FlSOKM3Kx9ZmzqZGq7"
+uri = "file://artifacts/galaxy-web/public/assets/frames/galaxy-vortex.gif"
+type = "image"
+title = "Galaxy Vortex Animated Frame"
+description = "Transparent 256px animated GIF frame with a rotating purple, cyan, and pink galaxy ring. Saved in the Galaxy web public frames folder."
+logical_id = "ae69e3c2-83df-44b4-8cb7-e39619895c44"
+content_hash = "sha256:f24907d2cb7d7fdd894d978555328be8a96e0c13012454a985a80aff6e19bc5c"
+size = 80950
+mtime_ms = 1787221259550
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:5d527b40-679d-49cc-ac34-ddd2deff3b57/ae69e3c2-83df-44b4-8cb7-e39619895c44/a839291b-c09b-4b0d-90d1-4d9161cf64f2"
+storage_version_token = "1787221292299155"
+content_type = "image/gif"
