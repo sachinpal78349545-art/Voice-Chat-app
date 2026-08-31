@@ -227,3 +227,17 @@ mtime_ms = 1788184127844
 storage_uri = "gcs://replit-rams-assets-sisko/rams/assets/repl:c8e713f3-f6b0-444f-b2e8-dab94c2a752a/1c927481-5e70-4029-bc71-735ce757afd0/f4cf0909-b98c-41fb-9b87-190beffb2f58"
 storage_version_token = "1788184184257808"
 content_type = "image/jpeg"
+
+[[outputs]]
+id = "d2Wq9CYQl6hR1Sa4ABwDg"
+uri = "file://screenshots/galaxy-live-current-ui.jpg"
+type = "image"
+title = "Galaxy Voice Chat Live UI"
+description = "Fresh 390×844 capture from the running Galaxy Voice Chat web app. The preview is currently at the splash screen because no signed-in profile session is available."
+logical_id = "4ea9e386-7452-497e-8421-12765a95e3f9"
+content_hash = "sha256:7475341f709c466f73c0d3d5b9f22f7a2a4d7ca6f66394de1b448bc5549ce392"
+size = 10129
+mtime_ms = 1788186527820
+storage_uri = "gcs://replit-rams-assets-sisko/rams/assets/repl:c8e713f3-f6b0-444f-b2e8-dab94c2a752a/4ea9e386-7452-497e-8421-12765a95e3f9/9e791b10-5086-4cf1-8004-2bdc6a9a6def"
+storage_version_token = "1788186538274943"
+content_type = "image/jpeg"
