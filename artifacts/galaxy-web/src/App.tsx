@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { onAuthStateChanged, User as FBUser, getRedirectResult, signOut } from "firebase/auth";
 import { auth } from "./lib/firebase";
-import { Compass, Home, MessageCircle, Mic2, UserRound } from "lucide-react";
+import { Compass, Home, MessageCircle, Plus, UserRound } from "lucide-react";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { UserProfile, initUser, subscribeUser, setupOnlinePresence, claimDailyReward, isUserBanned, getBanTimeRemaining } from "./lib/userService";
 import { Room, subscribeMaintenanceMode, getAutoEntryRoom, createRoom } from "./lib/roomService";
@@ -28,11 +28,11 @@ import "./index.css";
 type NavPage = "home" | "rooms" | "chats" | "moment" | "mine" | "notifications" | "search" | "explore" | "recharge" | "admin-recharge";
 
 const NAV = [
-  { id: "home", icon: Home, label: "Home" },
+  { id: "home", icon: Home, label: "Live" },
   { id: "explore", icon: Compass, label: "Explore" },
-  { id: "rooms", icon: Mic2, label: "Rooms" },
-  { id: "chats", icon: MessageCircle, label: "Chats" },
-  { id: "mine", icon: UserRound, label: "Mine" },
+  { id: "rooms", icon: Plus, label: "" },
+  { id: "chats", icon: MessageCircle, label: "Chat" },
+  { id: "mine", icon: UserRound, label: "Profile" },
 ] as const;
 
 function SplashScreen({ onDone }: { onDone: () => void }) {
@@ -431,7 +431,7 @@ function AppInner() {
             <span style={{ fontSize: 12, fontWeight: 700, color: "#ff9999" }}>No internet connection — reconnecting…</span>
           </div>
         )}
-        {(page === "home" || page === "rooms" || (page === "chats" && !chatActive)) && (
+        {(page === "home" || page === "rooms") && (
           <div style={{
             position: "fixed", top: 0, left: 0, right: 0, maxWidth: 400, margin: "0 auto",
             zIndex: 100,
@@ -504,8 +504,9 @@ function AppInner() {
             {NAV.map(item => (
               <button
                 key={item.id}
-                className={`nav-item ${page === item.id ? "active" : ""}`}
-                onClick={() => changePage(item.id as NavPage)}
+                className={`nav-item${item.id === "rooms" ? " nav-item--create" : ""} ${page === item.id ? "active" : ""}`}
+                aria-label={item.id === "rooms" ? "Create a voice room" : item.label}
+                onClick={() => item.id === "rooms" ? handleCreateRoom() : changePage(item.id as NavPage)}
               >
                 <span className="nav-icon" style={{ position: "relative" }}>
                   <item.icon size={20} strokeWidth={2.1} />

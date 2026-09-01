@@ -1,4 +1,4 @@
-import { BadgeCheck, ChevronRight, Inbox, UserRound, UserRoundPlus } from "lucide-react";
+import { BadgeCheck, Inbox, UserRound, UserRoundPlus } from "lucide-react";
 import { Conversation } from "../../lib/chatService";
 import { UserProfile } from "../../lib/userService";
 import "./MessageList.css";
@@ -99,11 +99,7 @@ export default function MessageList({
   return (
     <section className="messages-list" aria-labelledby="messages-list-title">
       <header className="messages-list__header">
-        <div>
-          <p className="messages-list__eyebrow">Stay in the moment</p>
-          <h1 className="messages-list__title" id="messages-list-title">Messages</h1>
-          <p className="messages-list__description">Your voice-room conversations, all in one place.</p>
-        </div>
+        <h1 className="messages-list__title" id="messages-list-title">Messages</h1>
         <button
           className="messages-list__new-chat"
           type="button"
@@ -194,7 +190,6 @@ export default function MessageList({
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}
-                <ChevronRight className="messages-row__arrow" size={17} strokeWidth={1.8} aria-hidden="true" />
               </button>
             );
           })}
