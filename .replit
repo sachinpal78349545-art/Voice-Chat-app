@@ -18,3 +18,15 @@ expertMode = true
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 20000
+
+[userenv]
+
+[userenv.shared]
+VITE_FIREBASE_API_KEY = "AIzaSyACJvjNecVmc-ooULC99pjlu6slWiQz_3o"
+VITE_FIREBASE_APP_ID = "1:767922030084:web:f8f1664a9685832faf5751"
+VITE_FIREBASE_AUTH_DOMAIN = "chalotalk-67106.firebaseapp.com"
+VITE_FIREBASE_DATABASE_URL = "https://chalotalk-67106-default-rtdb.firebaseio.com"
+VITE_FIREBASE_MEASUREMENT_ID = "G-QV3K0F55YZ"
+VITE_FIREBASE_MESSAGING_SENDER_ID = "767922030084"
+VITE_FIREBASE_PROJECT_ID = "chalotalk-67106"
+VITE_FIREBASE_STORAGE_BUCKET = "chalotalk-67106.firebasestorage.app"
