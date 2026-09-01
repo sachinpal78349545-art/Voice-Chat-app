@@ -1,13 +1,14 @@
 // ChatsPage.tsx – Exact Chalotalk Style (Messages tab mein sirf chatlist)
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 
+import MessageList from "../components/chat/MessageList";
 import { UserProfile, incrementStat, followUser, unfollowUser, subscribeUser, blockUser, canChatSync, isSuperAdmin, sendGift } from "../lib/userService";
 import { Conversation, ChatMessage, subscribeConversations, subscribeMessages, sendMessage, sendImageMessage, sendVoiceMessage, addReaction, setTyping, subscribeTyping, markRead, clearChat, updateLastSeen } from "../lib/chatService";
 import { sendNotification, subscribeNotifications, Notification as AppNotification, markNotificationRead, markAllNotificationsRead } from "../lib/notificationService";
 import { useToast } from "../lib/toastContext";
-import { ensureSystemConversations, getOrCreateSystemConversation, SYSTEM_USERS, ASSISTANT_UID } from "../lib/systemChatService";
+import { getOrCreateSystemConversation, SYSTEM_USERS, ASSISTANT_UID } from "../lib/systemChatService";
 
-interface Props { user: UserProfile; initialChatUid?: string | null; onChatActive?: (active: boolean) => void; }
+interface Props { user: UserProfile; initialChatUid?: string | null; onChatActive?: (active: boolean) => void; onNewChat?: () => void; onExploreRooms?: () => void; }
 
 // ========== CONSTANTS ==========
 const EMOJI_GRID = [
@@ -38,17 +39,6 @@ const NOTIF_CATEGORIES = [
 ];
 
 // ========== HELPER FUNCTIONS ==========
-async function sendWelcomeMessage(userId: string, userName: string, showToast: (msg: string, type?: string, icon?: string) => void) {
-  try {
-    const convId = await getOrCreateSystemConversation(userId, ASSISTANT_UID, userName);
-    await sendMessage(convId, ASSISTANT_UID,
-      `👋 **Welcome to Galaxy Voice Chat, ${userName}!** 🌟\n\nWe're thrilled to have you here.\n🎁 **Welcome Bonus:** 50 Diamonds added!\n\n✨ Chat, make friends, level up, and unlock rewards.\n\nHave fun! 🚀`,
-      "system"
-    );
-    showToast("Welcome! 50 Diamonds credited 🎉", "success");
-  } catch (err) { console.error(err); }
-}
-
 export async function sendLevelUpReward(userId: string, newLevel: number, diamondsReward: number) {
   try {
     const convId = await getOrCreateSystemConversation(userId, ASSISTANT_UID);
@@ -59,9 +49,12 @@ export async function sendLevelUpReward(userId: string, newLevel: number, diamon
   } catch (err) { console.error(err); }
 }
 
-export default function ChatsPage({ user, initialChatUid, onChatActive }: Props) {
+export default function ChatsPage({ user, initialChatUid, onChatActive, onNewChat, onExploreRooms }: Props) {
   const [convs, setConvs] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [conversationError, setConversationError] = useState<string | null>(null);
+  const [conversationSubscriptionKey, setConversationSubscriptionKey] = useState(0);
+  const [participantProfiles, setParticipantProfiles] = useState<Record<string, UserProfile>>({});
   const [active, setActive] = useState<Conversation | null>(null);
   const [msgs, setMsgs] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -79,7 +72,6 @@ export default function ChatsPage({ user, initialChatUid, onChatActive }: Props)
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [swipingMsgId, setSwipingMsgId] = useState<string | null>(null);
   const [swipeX, setSwipeX] = useState(0);
-  const [activeTab, setActiveTab] = useState<"contacts" | "messages">("contacts");
   const touchStart = useRef<{ x: number; y: number; id: string } | null>(null);
   const msgEnd = useRef<HTMLDivElement>(null);
   const unlockedConvs = useRef<Set<string>>(new Set());
@@ -91,26 +83,42 @@ export default function ChatsPage({ user, initialChatUid, onChatActive }: Props)
   const recordStartTime = useRef(0);
   const { showToast } = useToast();
 
+  const participantIds = useMemo(() => Array.from(new Set(
+    convs.flatMap(conversation => conversation.participants.filter(participantId => participantId !== user.uid)),
+  )), [convs, user.uid]);
+  const participantIdKey = participantIds.join("|");
+
   // ========== EFFECTS ==========
   useEffect(() => {
-    if (user.uid) {
-      ensureSystemConversations(user.uid, user.name, user.avatar).catch(console.error);
-    }
+    setLoading(true);
+    setConversationError(null);
     const unsub = subscribeConversations(user.uid, (c: Conversation[]) => {
       setConvs(c);
       setLoading(false);
+      setConversationError(null);
+    }, error => {
+      setLoading(false);
+      setConversationError(error.message || "Unable to load conversations.");
     });
     return unsub;
-  }, [user.uid]);
+  }, [user.uid, conversationSubscriptionKey]);
 
   useEffect(() => {
-    if (!user.uid) return;
-    const flag = `welcome_sent_${user.uid}`;
-    if (!localStorage.getItem(flag)) {
-      sendWelcomeMessage(user.uid, user.name, showToast);
-      localStorage.setItem(flag, "true");
+    if (!participantIds.length) {
+      setParticipantProfiles({});
+      return;
     }
-  }, [user.uid, user.name]);
+
+    const cleanups = participantIds.map(participantId => subscribeUser(participantId, profile => {
+      setParticipantProfiles(current => {
+        const next = { ...current };
+        if (profile) next[participantId] = profile;
+        else delete next[participantId];
+        return next;
+      });
+    }));
+    return () => cleanups.forEach(cleanup => cleanup());
+  }, [participantIdKey, user.uid]);
 
   useEffect(() => {
     const unsub = subscribeNotifications(user.uid, setNotifications);
@@ -302,40 +310,6 @@ export default function ChatsPage({ user, initialChatUid, onChatActive }: Props)
   const formatLastSeen = (ts: number | null) => { if (!ts) return ""; const diff = Date.now() - ts; if (diff < 60000) return "just now"; if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`; if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`; return `${Math.floor(diff / 86400000)}d ago`; };
   const formatMessageTime = (ts: number) => new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-  // Get mutual count (random for demo)
-  const getMutualCount = (_targetId: string): number => {
-    return Math.floor(Math.random() * 100);
-  };
-
-  // Contacts list (non-system conversations only)
-  const contactsList = convs
-    .filter(conv => {
-      const idx = conv.participants[0] === user.uid ? 1 : 0;
-      return !conv.participantIsSystem?.[idx];
-    })
-    .map(conv => {
-      const idx = conv.participants[0] === user.uid ? 1 : 0;
-      const otherId = conv.participants[idx];
-      const isMutual = (user.followingList || []).includes(otherId) && (user.followersList || []).includes(otherId);
-      return {
-        id: otherId,
-        name: conv.participantNames[idx],
-        avatar: conv.participantAvatars[idx],
-        lastTime: conv.lastTime,
-        isFriend: isMutual,
-        mutualCount: getMutualCount(otherId),
-      };
-    })
-    .sort((a,b) => (b.lastTime || 0) - (a.lastTime || 0));
-
-  // Recommend friends (for Contacts tab only)
-  const recommendedFriends = contactsList.slice(0, 5).map(contact => ({
-    id: contact.id,
-    name: contact.name,
-    avatar: contact.avatar,
-    isOfficial: false,
-  }));
-
   // ========== RENDER NOTIFICATION HUB ==========
   if (showNotifHub) {
     return (
@@ -473,140 +447,32 @@ export default function ChatsPage({ user, initialChatUid, onChatActive }: Props)
     );
   }
 
-  // ========== CHAT LIST VIEW (Contacts & Messages tabs) ==========
-  // Sort conversations by lastTime (latest first)
-  const sortedConvs = [...convs].sort((a, b) => (b.lastTime || 0) - (a.lastTime || 0));
+  // ========== MESSAGES LIST VIEW ==========
+  const sortedConvs = convs
+    .filter(conversation => conversation.participants?.includes(user.uid) && conversation.participants.length > 1)
+    .sort((a, b) => (b.lastTime || 0) - (a.lastTime || 0));
 
   return (
-    <div className="page-scroll">
-      <div style={{ padding: "52px 16px 12px" }}>
-        {/* Tabs - Contacts | Messages */}
-        <div style={{ display: "flex", gap: 16, marginBottom: 20, borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-          <span
-            onClick={() => setActiveTab("contacts")}
-            style={{ fontSize: 18, fontWeight: 800, color: activeTab === "contacts" ? "#6C5CE7" : "rgba(162,155,254,0.5)", borderBottom: activeTab === "contacts" ? "2px solid #6C5CE7" : "none", paddingBottom: 8, cursor: "pointer" }}
-          >Contacts</span>
-          <span
-            onClick={() => setActiveTab("messages")}
-            style={{ fontSize: 18, fontWeight: 800, color: activeTab === "messages" ? "#6C5CE7" : "rgba(162,155,254,0.5)", borderBottom: activeTab === "messages" ? "2px solid #6C5CE7" : "none", paddingBottom: 8, cursor: "pointer" }}
-          >Messages</span>
-        </div>
-
-        {/* Stats row 1: Friends | Followers | Following */}
-        <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(108,92,231,0.06)", borderRadius: 28, padding: "12px 20px", marginBottom: 12, border: "1px solid rgba(108,92,231,0.15)" }}>
-          <span style={{ fontSize: 14, fontWeight: 700 }}>{user.friendsCount || 0} <span style={{ fontWeight: 400, color: "rgba(162,155,254,0.7)" }}>Friends</span></span>
-          <span style={{ fontSize: 14, fontWeight: 700 }}>{user.followers || 0} <span style={{ fontWeight: 400, color: "rgba(162,155,254,0.7)" }}>Followers</span></span>
-          <span style={{ fontSize: 14, fontWeight: 700 }}>{user.following || 0} <span style={{ fontWeight: 400, color: "rgba(162,155,254,0.7)" }}>Following</span></span>
-        </div>
-
-        {/* Stats row 2: Fans (❤️) and Visitors (👁️) */}
-        <div style={{ display: "flex", justifyContent: "space-around", background: "rgba(0,0,0,0.2)", borderRadius: 28, padding: "10px 20px", marginBottom: 20, border: "1px solid rgba(108,92,231,0.1)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 20 }}>❤️</span>
-            <div>
-              <span style={{ fontSize: 16, fontWeight: 800, display: "block" }}>{user.fansCount || 0}</span>
-              <span style={{ fontSize: 10, color: "rgba(162,155,254,0.6)" }}>Fans</span>
-            </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 20 }}>👁️</span>
-            <div>
-              <span style={{ fontSize: 16, fontWeight: 800, display: "block" }}>{user.visitorsCount || 0}</span>
-              <span style={{ fontSize: 10, color: "rgba(162,155,254,0.6)" }}>Visitors</span>
-            </div>
-          </div>
-        </div>
-
-        {/* CONTACTS TAB - with Recommend Friends */}
-        {activeTab === "contacts" && (
-          <>
-            {/* RECOMMEND FRIENDS */}
-            {recommendedFriends.length > 0 && (
-              <>
-                <p style={{ fontSize: 12, fontWeight: 800, color: "rgba(255,215,0,0.6)", marginBottom: 8, letterSpacing: 1 }}>📌 RECOMMEND FRIENDS</p>
-                <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8, marginBottom: 20 }}>
-                  {recommendedFriends.map(f => (
-                    <div key={f.id} onClick={() => { const conv = convs.find(c => c.participants.includes(f.id)); if (conv) setActive(conv); else showToast("Start a conversation", "info"); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, minWidth: 70, cursor: "pointer" }}>
-                      <div style={{ width: 56, height: 56, borderRadius: 28, background: "linear-gradient(135deg, #a855f7, #6C5CE7)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                        {f.avatar?.startsWith("http") ? <img src={f.avatar} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 24 }}>{f.avatar || "👤"}</span>}
-                      </div>
-                      <span style={{ fontSize: 10, color: "rgba(255,255,255,0.6)" }}>{f.name.length > 10 ? f.name.slice(0,8)+".." : f.name}</span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {/* Contacts List */}
-            <div style={{ padding: "0 14px" }}>
-              {contactsList.map(contact => (
-                <div key={contact.id} onClick={() => { const conv = convs.find(c => c.participants.includes(contact.id)); if (conv) setActive(conv); else showToast("Start a conversation", "info"); }} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 2px", borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer" }}>
-                  <div style={{ width: 48, height: 48, borderRadius: 24, background: "rgba(108,92,231,0.14)", border: "2px solid rgba(108,92,231,0.25)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                    {contact.avatar?.startsWith("http") ? <img src={contact.avatar} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 24 }}>{contact.avatar || "👤"}</span>}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontWeight: 800, fontSize: 14, color: "#fff" }}>{contact.name}</span>
-                      <span style={{ fontSize: 11, color: "rgba(162,155,254,0.35)" }}>📞{contact.mutualCount}</span>
-                    </div>
-                    <p style={{ fontSize: 12, color: "rgba(162,155,254,0.6)", marginTop: 2 }}>
-                      {contact.isFriend ? "Friends" : "Follow back to become friends."}
-                    </p>
-                  </div>
-                </div>
-              ))}
-              {contactsList.length === 0 && (
-                <div style={{ textAlign: "center", padding: "40px 20px" }}>
-                  <p style={{ fontSize: 40, marginBottom: 12 }}>👥</p>
-                  <p style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>No contacts yet</p>
-                  <p style={{ fontSize: 12, color: "rgba(162,155,254,0.4)" }}>Follow people to see them here</p>
-                </div>
-              )}
-            </div>
-          </>
-        )}
-
-        {/* MESSAGES TAB - ONLY CHATLIST (no System Notifications tile, no Recommend Friends) */}
-        {activeTab === "messages" && (
-          <div style={{ padding: "0 14px" }}>
-            {loading ? (
-              Array.from({ length: 5 }).map((_,i)=> <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 2px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}><div className="skeleton skeleton-circle" style={{ width: 48, height: 48 }} /><div style={{ flex:1, display:"flex", flexDirection:"column", gap:6 }}><div className="skeleton skeleton-text" style={{ width:"50%" }} /><div className="skeleton skeleton-text" style={{ width:"70%" }} /></div></div>)
-            ) : sortedConvs.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "40px 20px" }}>
-                <p style={{ fontSize: 40, marginBottom: 12 }}>💬</p>
-                <p style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>No conversations yet</p>
-                <p style={{ fontSize: 12, color: "rgba(162,155,254,0.4)" }}>Start chatting from Rooms or Explore!</p>
-              </div>
-            ) : (
-              sortedConvs.map(conv => {
-                const idx = conv.participants[0] === user.uid ? 1 : 0;
-                const elapsed = Date.now() - (conv.lastTime || 0);
-                const timeStr = elapsed < 3600000 ? `${Math.floor(elapsed / 60000)}m` : elapsed < 86400000 ? `${Math.floor(elapsed / 3600000)}h` : `${Math.floor(elapsed / 86400000)}d`;
-                const unreadCount = (conv.unread || {})[user.uid] || 0;
-                const isSystem = conv.participantIsSystem?.[idx] || false;
-                return (
-                  <div key={conv.id} onClick={() => { setActive(conv); markRead(conv.id, user.uid); }} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 2px", borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer" }}>
-                    <div style={{ position: "relative" }}>
-                      <div style={{ width: 48, height: 48, borderRadius: 24, fontSize: 22, background: "rgba(108,92,231,0.14)", border: "2px solid rgba(108,92,231,0.25)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                        {conv.participantAvatars[idx]?.startsWith?.("http") ? <img src={conv.participantAvatars[idx]} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : conv.participantAvatars[idx]}
-                      </div>
-                      {isSystem && <div style={{ position: "absolute", bottom: -4, right: -4, background: "#FFD700", borderRadius: 10, width: 14, height: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, color: "#000" }}>✨</div>}
-                      <div style={{ position: "absolute", bottom: 2, right: 2, width: 10, height: 10, borderRadius: 5, background: "#00e676", border: "1.5px solid #0F0F1A" }} />
-                    </div>
-                    <div style={{ flex: 1, overflow: "hidden" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
-                        <span style={{ fontWeight: 800, fontSize: 14, color: isSystem ? "#FFD700" : "#fff" }}>{conv.participantNames[idx]}</span>
-                        <span style={{ fontSize: 11, color: "rgba(162,155,254,0.35)" }}>{timeStr}</span>
-                      </div>
-                      <p style={{ fontSize: 13, color: "rgba(162,155,254,0.45)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{conv.lastMessage}</p>
-                    </div>
-                    {unreadCount > 0 && <div style={{ minWidth: 20, height: 20, borderRadius: 10, background: "#ff6482", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, padding: "0 5px", color: "#fff" }}>{unreadCount}</div>}
-                  </div>
-                );
-              })
-            )}
-          </div>
-        )}
+    <div className="page-scroll messages-page">
+      <div className="chat-list-page-content">
+        <MessageList
+          user={user}
+          conversations={sortedConvs}
+          participantProfiles={participantProfiles}
+          loading={loading}
+          error={conversationError}
+          onRetry={() => {
+            setConversationError(null);
+            setLoading(true);
+            setConversationSubscriptionKey(key => key + 1);
+          }}
+          onSelectConversation={conversation => {
+            setActive(conversation);
+            markRead(conversation.id, user.uid).catch(console.warn);
+          }}
+          onNewChat={() => onNewChat?.()}
+          onExploreRooms={() => onExploreRooms?.()}
+        />
       </div>
     </div>
   );

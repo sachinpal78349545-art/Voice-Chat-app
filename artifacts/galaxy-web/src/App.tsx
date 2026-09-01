@@ -474,7 +474,7 @@ function AppInner() {
           {page === "home" && <HomePage user={profile} onJoinRoom={joinRoom} onCreateRoom={handleCreateRoom} onViewProfile={(p) => setViewedProfile(p)} />}
           {page === "explore" && <ExplorePage user={profile} onMessage={(uid) => { setChatTargetUid(uid); changePage("chats"); }} onNavigate={(p) => changePage(p as NavPage)} />}
           {page === "rooms" && <RoomsPage user={profile} onJoinRoom={joinRoom} />}
-          {page === "chats" && <ChatsPage user={profile} initialChatUid={chatTargetUid} onChatActive={setChatActive} />}
+          {page === "chats" && <ChatsPage user={profile} initialChatUid={chatTargetUid} onChatActive={setChatActive} onNewChat={() => changePage("search")} onExploreRooms={() => changePage("rooms")} />}
           {page === "moment" && <div>Moments Page (Coming Soon)</div>}
           {page === "notifications" && <NotificationPage user={profile} notifications={notifications} onMessage={(uid) => { setChatTargetUid(uid); changePage("chats"); }} onFollowBack={() => {}} />}
           {page === "search" && <SearchPage user={profile} onMessage={(uid) => { setChatTargetUid(uid); changePage("chats"); }} onBack={() => changePage("home")} />}

@@ -71,6 +71,8 @@ export interface UserProfile {
   charmXp: number;
   // ======================================
   vip: boolean;
+  verified?: boolean;
+  isVerified?: boolean;
   online: boolean;
   lastSeen: number;
   createdAt: number;

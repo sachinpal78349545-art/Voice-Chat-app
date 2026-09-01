@@ -24,13 +24,18 @@ export interface Conversation {
   participantAvatars: string[];
   participantIsSystem?: Record<number, boolean>;
   lastMessage: string;
+  lastMessageType?: ChatMessage["type"];
   lastTime: number;
   unread: Record<string, number>;
   typing?: Record<string, boolean>;
   lastSeen?: Record<string, number>;
 }
 
-export function subscribeConversations(userId: string, cb: (convs: Conversation[]) => void): () => void {
+export function subscribeConversations(
+  userId: string,
+  cb: (convs: Conversation[]) => void,
+  onError?: (error: Error) => void,
+): () => void {
   if (!userId) {
     cb([]);
     return () => {};
@@ -39,44 +44,51 @@ export function subscribeConversations(userId: string, cb: (convs: Conversation[
   const r = ref(db, `userConvs/${userId}`);
   let convUnsubs: (() => void)[] = [];
   let currentConvs: Conversation[] = [];
+  const reportError = (error: unknown) => {
+    onError?.(error instanceof Error ? error : new Error("Unable to load conversations"));
+  };
 
   onValue(r, async snap => {
-    convUnsubs.forEach(u => u());
-    convUnsubs = [];
+    try {
+      convUnsubs.forEach(u => u());
+      convUnsubs = [];
 
-    if (!snap.exists()) { currentConvs = []; cb([]); return; }
-    const convIds = Object.keys(snap.val());
-    const convs: Conversation[] = [];
+      if (!snap.exists()) { currentConvs = []; cb([]); return; }
+      const convIds = Object.keys(snap.val());
+      const convs: Conversation[] = [];
 
-    for (const cid of convIds) {
-      const cSnap = await get(ref(db, `conversations/${cid}`));
-      if (cSnap.exists()) {
-        convs.push({ ...cSnap.val(), id: cid });
-      }
-    }
-    convs.sort((a, b) => (b.lastTime || 0) - (a.lastTime || 0));
-    currentConvs = convs;
-    cb(convs);
-
-    for (const cid of convIds) {
-      const cRef = ref(db, `conversations/${cid}`);
-      onValue(cRef, cSnap => {
-        if (!cSnap.exists()) return;
-        const updated = { ...cSnap.val(), id: cid };
-        const idx = currentConvs.findIndex(c => c.id === cid);
-        if (idx >= 0) {
-          const n = [...currentConvs];
-          n[idx] = updated;
-          n.sort((a, b) => (b.lastTime || 0) - (a.lastTime || 0));
-          currentConvs = n;
-        } else {
-          currentConvs = [...currentConvs, updated].sort((a, b) => (b.lastTime || 0) - (a.lastTime || 0));
+      for (const cid of convIds) {
+        const cSnap = await get(ref(db, `conversations/${cid}`));
+        if (cSnap.exists()) {
+          convs.push({ ...cSnap.val(), id: cid });
         }
-        cb(currentConvs);
-      });
-      convUnsubs.push(() => off(cRef));
+      }
+      convs.sort((a, b) => (b.lastTime || 0) - (a.lastTime || 0));
+      currentConvs = convs;
+      cb(convs);
+
+      for (const cid of convIds) {
+        const cRef = ref(db, `conversations/${cid}`);
+        onValue(cRef, cSnap => {
+          if (!cSnap.exists()) return;
+          const updated = { ...cSnap.val(), id: cid };
+          const idx = currentConvs.findIndex(c => c.id === cid);
+          if (idx >= 0) {
+            const n = [...currentConvs];
+            n[idx] = updated;
+            n.sort((a, b) => (b.lastTime || 0) - (a.lastTime || 0));
+            currentConvs = n;
+          } else {
+            currentConvs = [...currentConvs, updated].sort((a, b) => (b.lastTime || 0) - (a.lastTime || 0));
+          }
+          cb(currentConvs);
+        }, reportError);
+        convUnsubs.push(() => off(cRef));
+      }
+    } catch (error) {
+      reportError(error);
     }
-  });
+  }, reportError);
 
   return () => {
     off(r);
@@ -149,6 +161,7 @@ export async function sendMessage(convId: string, senderId: string, text: string
 
   await update(ref(db, `conversations/${convId}`), {
     lastMessage: type === "emoji" ? text : text.slice(0, 60),
+    lastMessageType: type,
     lastTime: Date.now(),
   });
 
@@ -188,6 +201,7 @@ export async function sendImageMessage(convId: string, senderId: string, file: F
 
   await update(ref(db, `conversations/${convId}`), {
     lastMessage: "📷 Image",
+    lastMessageType: "image",
     lastTime: Date.now(),
   });
 
@@ -349,6 +363,7 @@ export async function sendVoiceMessage(convId: string, senderId: string, file: B
 
   await update(ref(db, `conversations/${convId}`), {
     lastMessage: "🎤 Voice message",
+    lastMessageType: "voice",
     lastTime: Date.now(),
   });
 
