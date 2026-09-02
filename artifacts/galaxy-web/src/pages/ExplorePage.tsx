@@ -289,7 +289,7 @@ export default function ExplorePage({ user, onMessage: _onMessage, onNavigate }:
   );
 
   return (
-    <div className="page-scroll">
+    <div className="page-scroll explore-page">
       <div style={{ padding: "54px 16px 8px", display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 900, background: "linear-gradient(135deg,#A29BFE,#6C5CE7)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Explore</h1>

@@ -432,7 +432,7 @@ function AppInner() {
           </div>
         )}
         {(page === "home" || page === "rooms") && (
-          <div style={{
+          <div className={`global-top-tools${page === "home" ? " global-top-tools--light" : ""}`} style={{
             position: "fixed", top: 0, left: 0, right: 0, maxWidth: 400, margin: "0 auto",
             zIndex: 100,
             display: "flex", alignItems: "center", gap: 8, padding: "10px 12px",
