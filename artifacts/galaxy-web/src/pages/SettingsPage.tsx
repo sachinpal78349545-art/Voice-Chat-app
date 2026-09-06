@@ -1,4 +1,4 @@
-// SettingsPage.tsx – Complete: Clear Chat Cache + App Version + Delete Account with Reason + Navigation Bar Hider
+// SettingsPage.tsx – Admin‑connected Privacy Policy & Terms of Service
 import React, { useState, useEffect } from "react";
 import { UserProfile } from "../lib/userService";
 import { getCurrentLanguage } from "../lib/i18n";
@@ -20,7 +20,7 @@ import { setMaintenanceMode, clearRoomChat } from "../lib/roomService";
 import { useToast } from "../lib/toastContext";
 import { auth, db } from "../lib/firebase";
 import { deleteUser } from "firebase/auth";
-import { ref, set } from "firebase/database";
+import { ref, get, set } from "firebase/database";
 import { subscribeConversations, Conversation } from "../lib/chatService";
 
 interface SettingsPageProps {
@@ -83,7 +83,11 @@ export default function SettingsPage({
   const [godBadgeName, setGodBadgeName] = useState("");
   const [godBadgeIcon, setGodBadgeIcon] = useState("");
 
-  // ----- New features states -----
+  // Policy content states
+  const [privacyContent, setPrivacyContent] = useState<string>("");
+  const [termsContent, setTermsContent] = useState<string>("");
+  const [showPrivacy, setShowPrivacy] = useState(false);
+
   const [showClearChatCache, setShowClearChatCache] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConvIds, setSelectedConvIds] = useState<Set<string>>(new Set());
@@ -183,11 +187,51 @@ export default function SettingsPage({
     setCheckingUpdate(false);
   };
 
+  // ─── Fetch policy content from Firebase ────────────────────────────────
+  const fetchPolicyContent = async (type: "privacy" | "terms") => {
+    try {
+      const path = type === "privacy" ? "appConfig/privacyPolicy" : "appConfig/termsOfService";
+      const snap = await get(ref(db, path));
+      if (snap.exists()) {
+        const data = snap.val();
+        if (type === "privacy") setPrivacyContent(data.content || "");
+        else setTermsContent(data.content || "");
+      } else {
+        // Set a default placeholder if nothing in DB
+        const defaultContent =
+          type === "privacy"
+            ? "Privacy Policy content not set. Please configure in Admin Panel."
+            : "Terms of Service content not set. Please configure in Admin Panel.";
+        if (type === "privacy") setPrivacyContent(defaultContent);
+        else setTermsContent(defaultContent);
+      }
+    } catch (error) {
+      console.error("Error fetching policy:", error);
+      showToast("Failed to load policy content", "error");
+      const fallback =
+        type === "privacy"
+          ? "Privacy Policy is currently unavailable. Please try again later."
+          : "Terms of Service are currently unavailable. Please try again later.";
+      if (type === "privacy") setPrivacyContent(fallback);
+      else setTermsContent(fallback);
+    }
+  };
+
+  const handlePrivacyClick = async () => {
+    await fetchPolicyContent("privacy");
+    setShowPrivacy(true);
+  };
+
+  const handleTermsClick = async () => {
+    await fetchPolicyContent("terms");
+    setShowTerms(true);
+  };
+
   const SETTINGS_ITEMS = [
     { icon: "✏️", label: "Edit Profile", desc: "Name, avatar & bio", action: "edit" },
     { icon: "🌍", label: "Language", desc: getCurrentLanguage().toUpperCase(), action: "language" },
-    { icon: "📜", label: "Privacy Policy", desc: "Read our privacy policy", action: "privacyPolicy" },
-    { icon: "⚖️", label: "Terms of Service", desc: "Community guidelines & rules", action: "termsOfService" },
+    { icon: "📜", label: "Privacy Policy", desc: "Read our privacy policy", action: "privacy" },
+    { icon: "⚖️", label: "Terms of Service", desc: "Community guidelines & rules", action: "terms" },
     { icon: "🚫", label: "Blocked Users", desc: `${(user.blockedList || []).length} blocked`, action: "blocked" },
     {
       icon: "🤝",
@@ -200,8 +244,12 @@ export default function SettingsPage({
   ];
 
   const handleAction = (action: string) => {
-    if (action === "termsOfService") {
-      setShowTerms(true);
+    if (action === "privacy") {
+      handlePrivacyClick();
+      return;
+    }
+    if (action === "terms") {
+      handleTermsClick();
       return;
     }
     if (action === "godMode") {
@@ -686,7 +734,33 @@ export default function SettingsPage({
         </button>
       </BottomSheet>
 
-      {/* Terms of Service BottomSheet (unchanged) */}
+      {/* Privacy Policy BottomSheet – Dynamic Content */}
+      {showPrivacy && (
+        <BottomSheet>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexShrink: 0 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 900, color: "#00ffff" }}>📜 Privacy Policy</h2>
+            <button
+              onClick={() => setShowPrivacy(false)}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: 20,
+                color: "rgba(162,155,254,0.5)",
+              }}
+            >
+              ✕
+            </button>
+          </div>
+          <div style={{ flex: 1, overflowY: "auto", padding: "4px 0 20px 0" }}>
+            <div style={{ fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>
+              {privacyContent || "Loading privacy policy..."}
+            </div>
+          </div>
+        </BottomSheet>
+      )}
+
+      {/* Terms of Service BottomSheet – Dynamic Content */}
       {showTerms && (
         <BottomSheet>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexShrink: 0 }}>
@@ -705,47 +779,9 @@ export default function SettingsPage({
             </button>
           </div>
           <div style={{ flex: 1, overflowY: "auto", padding: "4px 0 20px 0" }}>
-            <p style={{ fontSize: 11, color: "rgba(255,215,0,0.5)", marginBottom: 12 }}>
-              Effective Date: May 16, 2026
-            </p>
-            <p style={{ fontSize: 13, fontWeight: 700, color: "#FFD700", marginTop: 8, marginBottom: 4 }}>
-              1. Eligibility & Age Limit
-            </p>
-            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", lineHeight: 1.5, marginBottom: 12 }}>
-              • You must be at least 18 years old to use Galaxy Voice Chat.<br />
-              • Creating an account using false birthdates is a serious violation, and such accounts will be terminated without warning.
-            </p>
-            <p style={{ fontSize: 13, fontWeight: 700, color: "#FFD700", marginBottom: 4 }}>
-              2. Prohibited Behavior (Ban-able Offenses)
-            </p>
-            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", lineHeight: 1.5, marginBottom: 12 }}>
-              • <strong>Harassment & Abuse:</strong> Any form of bullying, hate speech, abusive language, or insulting other users/hosts in voice chat rooms.<br />
-              • <strong>Toxic Behavior:</strong> Disrupting the peace of chat rooms, toxic arguments, or intentionally ruining the app experience for others.<br />
-              • <strong>Spamming:</strong> Flooding the chat rooms with repetitive text, playing loud/distorting audio, or promoting unauthorized third-party links.<br />
-              • <strong>Impersonation:</strong> Pretending to be a Galaxy Voice Chat official, admin, or moderator.
-            </p>
-            <p style={{ fontSize: 13, fontWeight: 700, color: "#FFD700", marginBottom: 4 }}>
-              3. Virtual Goods & Economy
-            </p>
-            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", lineHeight: 1.5, marginBottom: 12 }}>
-              • All virtual items (such as diamonds, gifts, VIP badges, and XP/levels) are non-transferable and have no real-world monetary value.<br />
-              • Any attempt to exploit bugs, use unauthorized APK modifications, or use third-party tools to manipulate balances will result in a permanent ban and forfeiture of all virtual items.
-            </p>
-            <p style={{ fontSize: 13, fontWeight: 700, color: "#FFD700", marginBottom: 4 }}>
-              4. Account Security & Responsibilities
-            </p>
-            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", lineHeight: 1.5, marginBottom: 12 }}>
-              • You are solely responsible for keeping your login credentials (mobile number and password) safe.<br />
-              • Galaxy Voice Chat is not responsible for any loss resulting from shared accounts.
-            </p>
-            <p style={{ fontSize: 13, fontWeight: 700, color: "#FFD700", marginBottom: 4 }}>
-              5. Ban Appeals
-            </p>
-            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", lineHeight: 1.5 }}>
-              • If your account has been suspended or banned, and you believe it was a mistake or due to false reporting, you can submit a formal review request.<br />
-              • All appeals must be sent to our official support email with your correct User ID (UID) and details of the event.<br />
-              • Official Support Email: <span style={{ color: "#00ffff" }}>galaxyvoicechat.support@gmail.com</span>
-            </p>
+            <div style={{ fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>
+              {termsContent || "Loading terms of service..."}
+            </div>
           </div>
         </BottomSheet>
       )}

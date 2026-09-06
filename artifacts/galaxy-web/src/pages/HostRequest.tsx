@@ -15,7 +15,7 @@ import {
   getUserKyc,
   submitKyc,
   requestPayout,
-} from '@/services/hostService'; // ensure these functions exist
+} from '@/services/hostService';
 import { ref, get } from 'firebase/database';
 import { db } from '@/lib/firebase';
 import {
@@ -27,6 +27,9 @@ import {
   Wallet,
   Crown,
 } from 'lucide-react';
+
+const BACKGROUND_IMAGE =
+  "https://res.cloudinary.com/dz1bhfpkc/image/upload/v1787745133/Screenshot_20260826_172044_Gallery_kjro8s.jpg";
 
 type HostStatus = 'none' | 'pending' | 'approved' | 'rejected';
 
@@ -74,7 +77,6 @@ export default function HostRequest() {
     const checkStatus = async () => {
       if (!user) return;
       try {
-        // 1. Check if user is already a host
         const host = await getHost(user.uid);
         if (host && host.status === 'active') {
           setStatus('approved');
@@ -83,7 +85,6 @@ export default function HostRequest() {
           return;
         }
 
-        // 2. Check for pending/rejected application
         const appRef = ref(db, 'hostApplications');
         const snap = await get(appRef);
         if (snap.exists()) {
@@ -237,19 +238,8 @@ export default function HostRequest() {
     );
   }
 
-  const renderMainContent = () => {
-    if (status === 'approved') {
-      return (
-        <div className="text-center space-y-4 py-6">
-          <div className="text-6xl mb-2">🎉</div>
-          <h2 className="text-2xl font-bold text-white">You are now a Host!</h2>
-          <p className="text-[#A9A6BD]">Your host account is active. Start hosting and earning rewards.</p>
-          <Button className="bg-gradient-to-r from-[#7C3AED] to-[#A855F7]" onClick={() => navigate('/host-dashboard')}>
-            <Home className="w-4 h-4 mr-2" /> Go to Dashboard
-          </Button>
-        </div>
-      );
-    }
+  // ─── Helper: Render status card ────────────────────────────────
+  const renderStatusContent = () => {
     if (status === 'pending') {
       return (
         <div className="text-center space-y-4 py-6">
@@ -260,6 +250,18 @@ export default function HostRequest() {
             <p className="text-sm text-[#A9A6BD]">Application ID</p>
             <p className="text-white font-mono text-sm">{applicationId || 'N/A'}</p>
           </div>
+        </div>
+      );
+    }
+    if (status === 'approved') {
+      return (
+        <div className="text-center space-y-4 py-6">
+          <div className="text-6xl mb-2">🎉</div>
+          <h2 className="text-2xl font-bold text-white">You are now a Host!</h2>
+          <p className="text-[#A9A6BD]">Your host account is active. Start hosting and earning rewards.</p>
+          <Button className="bg-gradient-to-r from-[#7C3AED] to-[#A855F7]" onClick={() => navigate('/host-dashboard')}>
+            <Home className="w-4 h-4 mr-2" /> Go to Dashboard
+          </Button>
         </div>
       );
     }
@@ -275,16 +277,16 @@ export default function HostRequest() {
         </div>
       );
     }
-    // none → show the request form
+    // status === 'none' → show join form
     return (
       <>
-        <div>
+        <div className="mt-6">
           <label className="text-sm text-[#A9A6BD] font-medium">Unique Id</label>
           <div className="mt-1 px-4 py-3 bg-[#121027] border border-[#292344] rounded-xl text-white font-mono text-sm">
             {uniqueId || 'Loading...'}
           </div>
         </div>
-        <div>
+        <div className="mt-6">
           <label className="text-sm text-[#A9A6BD] font-medium">Agency Code (optional)</label>
           <div className="flex gap-2 mt-1">
             <Input
@@ -305,7 +307,7 @@ export default function HostRequest() {
           <p className="text-xs text-[#555] mt-1">If you don't have an agency code, leave it blank.</p>
         </div>
         {foundAgency && (
-          <div className="bg-[#121027] border border-[#7C3AED]/30 rounded-xl p-3 flex items-center justify-between">
+          <div className="bg-[#121027] border border-[#7C3AED]/30 rounded-xl p-3 flex items-center justify-between mt-4">
             <div>
               <p className="text-white font-semibold">{foundAgency.name}</p>
               <p className="text-[#A9A6BD] text-xs">ID: {foundAgency.agencyId}</p>
@@ -314,7 +316,7 @@ export default function HostRequest() {
           </div>
         )}
         <Button
-          className="w-full bg-gradient-to-r from-[#7C3AED] to-[#A855F7] py-6 rounded-xl text-lg font-semibold"
+          className="w-full bg-gradient-to-r from-[#7C3AED] to-[#A855F7] py-6 rounded-xl text-lg font-semibold mt-6"
           onClick={handleSendRequest}
           disabled={isSubmitting}
         >
@@ -324,118 +326,185 @@ export default function HostRequest() {
     );
   };
 
+  // ─── MAIN JSX – NEW UI ──────────────────────────────────────────
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
-      {/* ✅ Full screen background with Cloudinary image */}
-      <div className="absolute inset-0 z-0">
+    <div className="relative min-h-screen w-full overflow-x-hidden bg-[#16004d]">
+      {/* Background Image */}
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <img
-          src="https://res.cloudinary.com/dz1bhfpkc/image/upload/v1787745133/Screenshot_20260826_172044_Gallery_kjro8s.jpg"
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            // Fallback gradient if image fails to load
-            e.currentTarget.style.display = 'none';
-            e.currentTarget.parentElement.className =
-              'absolute inset-0 z-0 bg-gradient-to-br from-[#070713] via-[#0D0B1D] to-[#121027]';
+          src={BACKGROUND_IMAGE}
+          alt=""
+          className="absolute left-0 top-0 block w-full max-w-none"
+          style={{
+            height: "auto",
+            width: "100%",
+            objectFit: "contain",
+            objectPosition: "top center",
           }}
         />
-        <div className="absolute inset-0 bg-black/60 z-1"></div>
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(10,0,45,0.03) 0%, rgba(10,0,45,0.08) 55%, rgba(22,0,77,0.35) 100%)",
+          }}
+        />
       </div>
 
-      {/* Back Button */}
-      <button
-        onClick={() => navigate(-1)}
-        className="absolute top-4 left-4 z-20 flex items-center text-[#A9A6BD] hover:text-white transition"
-      >
-        <ArrowLeft className="w-5 h-5 mr-1" /> Back
-      </button>
+      {/* Header */}
+      <header className="relative z-50 flex h-16 w-full items-center justify-between bg-white px-4 shadow-sm">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          aria-label="Go back"
+          className="flex h-11 w-11 items-center justify-center rounded-full text-[32px] leading-none text-black transition active:scale-90"
+        >
+          <span className="-mt-1">‹</span>
+        </button>
+        <h1 className="text-[20px] font-bold text-black">Host Request</h1>
+        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-[23px]">
+          👤
+        </div>
+      </header>
 
-      {/* Main Card */}
-      <Card className="relative z-10 bg-[#0D0B1D]/90 backdrop-blur-sm border-[#292344] rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl shadow-[#7C3AED]/10">
-        <CardContent className="p-6 space-y-5">
-          <div className="text-center">
-            {status === 'none' ? (
-              <>
-                <h2 className="text-xl font-bold text-white tracking-wide">REQUEST TO JOIN</h2>
-                <p className="text-[#7C3AED] text-lg font-semibold">HOST AGENCY</p>
-              </>
-            ) : (
-              <h2 className="text-xl font-bold text-white tracking-wide">Host Application Status</h2>
+      {/* Main Content */}
+      <main className="relative z-10 min-h-[calc(100vh-64px)] px-4 pb-12">
+        {/* Hero Title – only when status === 'none' */}
+        {status === 'none' && (
+          <section className="mx-auto w-full max-w-[520px] pt-[285px] text-center">
+            <h2
+              className="font-extrabold uppercase text-white"
+              style={{
+                fontSize: "clamp(25px, 7vw, 38px)",
+                lineHeight: "1.15",
+                textShadow: "0 3px 8px rgba(0,0,0,0.75), 0 0 12px rgba(0,0,0,0.45)",
+              }}
+            >
+              REQUEST TO JOIN
+              <br />
+              HOST AGENCY
+            </h2>
+            <p
+              className="mx-auto mt-4 max-w-[370px] font-semibold text-white"
+              style={{
+                fontSize: "clamp(15px, 4.2vw, 20px)",
+                lineHeight: "1.45",
+                textShadow: "0 2px 6px rgba(0,0,0,0.8)",
+              }}
+            >
+              Connect with an agency to start your hosting journey.
+            </p>
+          </section>
+        )}
+
+        {/* Card Container */}
+        <section className="mx-auto mt-8 w-full max-w-[520px]">
+          <div
+            className="rounded-[38px] border border-white/70 bg-white p-7 shadow-2xl"
+            style={{
+              boxShadow: "0 15px 45px rgba(0,0,0,0.28)",
+            }}
+          >
+            {/* Card Title – changes based on status */}
+            <h3
+              className="text-center font-extrabold"
+              style={{
+                fontSize: "clamp(30px, 8vw, 42px)",
+                background:
+                  status === 'none'
+                    ? "linear-gradient(90deg, #536dfe, #c23cff)"
+                    : status === 'pending'
+                    ? "linear-gradient(90deg, #f59e0b, #f97316)"
+                    : status === 'approved'
+                    ? "linear-gradient(90deg, #22c55e, #10b981)"
+                    : "linear-gradient(90deg, #ef4444, #dc2626)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              {status === 'none'
+                ? 'Join Agency'
+                : status === 'pending'
+                ? 'Pending Review'
+                : status === 'approved'
+                ? 'Host Approved!'
+                : 'Rejected'}
+            </h3>
+
+            {/* Status-specific content */}
+            {renderStatusContent()}
+
+            {/* KYC & Redeem Tabs – only if status is not 'none' */}
+            {(status === 'pending' || status === 'approved' || status === 'rejected') && (
+              <div className="pt-6 mt-6 border-t border-[#292344]">
+                <Tabs defaultValue="kyc" className="space-y-4">
+                  <TabsList className="bg-[#0D0B1D] border border-[#292344] p-1 rounded-xl w-full">
+                    <TabsTrigger value="kyc" className="flex-1 data-[state=active]:bg-[#7C3AED]">
+                      <ShieldCheck className="w-4 h-4 mr-1" /> KYC
+                    </TabsTrigger>
+                    <TabsTrigger value="redeem" className="flex-1 data-[state=active]:bg-[#7C3AED]">
+                      <Wallet className="w-4 h-4 mr-1" /> Redeem
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="kyc">
+                    {kycLoading ? (
+                      <div className="text-center py-4 text-[#A9A6BD]">Loading...</div>
+                    ) : kyc?.status === 'pending' ? (
+                      <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3 text-center">
+                        <p className="text-yellow-400 font-semibold">⏳ KYC pending review</p>
+                      </div>
+                    ) : kyc?.status === 'approved' ? (
+                      <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-3 text-center">
+                        <p className="text-green-400 font-semibold">✅ KYC approved</p>
+                      </div>
+                    ) : (
+                      <form onSubmit={handleKycSubmit} className="space-y-3">
+                        <Input placeholder="Full legal name" value={kycFields.fullName} onChange={(e) => setKycFields({...kycFields, fullName: e.target.value})} className="bg-[#121027] border-[#292344] text-white" required />
+                        <Input placeholder="Email" value={kycFields.email} onChange={(e) => setKycFields({...kycFields, email: e.target.value})} className="bg-[#121027] border-[#292344] text-white" />
+                        <Input placeholder="Phone" value={kycFields.phone} onChange={(e) => setKycFields({...kycFields, phone: e.target.value})} className="bg-[#121027] border-[#292344] text-white" />
+                        <Input placeholder="Country" value={kycFields.country} onChange={(e) => setKycFields({...kycFields, country: e.target.value})} className="bg-[#121027] border-[#292344] text-white" />
+                        <select value={kycFields.idType} onChange={(e) => setKycFields({...kycFields, idType: e.target.value})} className="w-full bg-[#121027] border border-[#292344] rounded-xl px-4 py-3 text-white">
+                          <option>Passport</option><option>National ID</option><option>Driving Licence</option>
+                        </select>
+                        <Input placeholder="ID Number" value={kycFields.idNumber} onChange={(e) => setKycFields({...kycFields, idNumber: e.target.value})} className="bg-[#121027] border-[#292344] text-white" required />
+                        <Input placeholder="Age" value={kycFields.age} onChange={(e) => setKycFields({...kycFields, age: e.target.value})} className="bg-[#121027] border-[#292344] text-white" />
+                        <Input placeholder="Address" value={kycFields.address} onChange={(e) => setKycFields({...kycFields, address: e.target.value})} className="bg-[#121027] border-[#292344] text-white" />
+                        <Input placeholder="ID Document URL (front)" value={kycFields.frontUrl} onChange={(e) => setKycFields({...kycFields, frontUrl: e.target.value})} className="bg-[#121027] border-[#292344] text-white" required />
+                        <Input placeholder="Back-side URL (optional)" value={kycFields.backUrl} onChange={(e) => setKycFields({...kycFields, backUrl: e.target.value})} className="bg-[#121027] border-[#292344] text-white" />
+                        <Button type="submit" disabled={kycSubmitting} className="w-full bg-[#2DD4BF] hover:bg-[#14b8a6] text-black font-bold">
+                          {kycSubmitting ? <Loader2 className="animate-spin h-5 w-5 mx-auto" /> : 'Submit KYC'}
+                        </Button>
+                      </form>
+                    )}
+                  </TabsContent>
+                  <TabsContent value="redeem">
+                    {status === 'approved' && kyc?.status === 'approved' ? (
+                      <form onSubmit={handleRedeemSubmit} className="space-y-3">
+                        <div className="bg-[#121027] border border-[#292344] rounded-xl p-3">
+                          <p className="text-sm text-[#A9A6BD]">Available Earnings</p>
+                          <p className="text-2xl font-bold text-[#F5B83D]">{totalEarnings.toLocaleString()} coins</p>
+                        </div>
+                        <Input type="number" placeholder="Coins to redeem" value={payoutCoins} onChange={(e) => setPayoutCoins(e.target.value)} className="bg-[#121027] border-[#292344] text-white" required />
+                        <select value={payoutMethod} onChange={(e) => setPayoutMethod(e.target.value)} className="w-full bg-[#121027] border border-[#292344] rounded-xl px-4 py-3 text-white">
+                          <option>UPI</option><option>Bank Transfer</option><option>PayPal</option>
+                        </select>
+                        <Input placeholder="UPI ID / Bank details / PayPal email" value={payoutDetails} onChange={(e) => setPayoutDetails(e.target.value)} className="bg-[#121027] border-[#292344] text-white" required />
+                        <Button type="submit" disabled={payoutLoading} className="w-full bg-gradient-to-r from-[#F5B83D] to-[#f97316] text-black font-bold">
+                          {payoutLoading ? <Loader2 className="animate-spin h-5 w-5 mx-auto" /> : 'Request Redeem'}
+                        </Button>
+                      </form>
+                    ) : (
+                      <div className="text-center py-4 text-[#A9A6BD] text-sm">
+                        {status !== 'approved' ? 'You need to be an approved host to redeem.' : 'Complete KYC before redeeming.'}
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
+              </div>
             )}
           </div>
-          <div className="h-px bg-gradient-to-r from-transparent via-[#7C3AED]/50 to-transparent" />
-
-          {renderMainContent()}
-
-          {/* KYC & Redeem Tabs – show only if user has applied or is host */}
-          {(status === 'pending' || status === 'approved' || status === 'rejected') && (
-            <div className="pt-4 border-t border-[#292344]">
-              <Tabs defaultValue="kyc" className="space-y-4">
-                <TabsList className="bg-[#0D0B1D] border border-[#292344] p-1 rounded-xl w-full">
-                  <TabsTrigger value="kyc" className="flex-1 data-[state=active]:bg-[#7C3AED]">
-                    <ShieldCheck className="w-4 h-4 mr-1" /> KYC
-                  </TabsTrigger>
-                  <TabsTrigger value="redeem" className="flex-1 data-[state=active]:bg-[#7C3AED]">
-                    <Wallet className="w-4 h-4 mr-1" /> Redeem
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="kyc">
-                  {kycLoading ? (
-                    <div className="text-center py-4 text-[#A9A6BD]">Loading...</div>
-                  ) : kyc?.status === 'pending' ? (
-                    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3 text-center">
-                      <p className="text-yellow-400 font-semibold">⏳ KYC pending review</p>
-                    </div>
-                  ) : kyc?.status === 'approved' ? (
-                    <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-3 text-center">
-                      <p className="text-green-400 font-semibold">✅ KYC approved</p>
-                    </div>
-                  ) : (
-                    <form onSubmit={handleKycSubmit} className="space-y-3">
-                      <Input placeholder="Full legal name" value={kycFields.fullName} onChange={(e) => setKycFields({...kycFields, fullName: e.target.value})} className="bg-[#121027] border-[#292344] text-white" required />
-                      <Input placeholder="Email" value={kycFields.email} onChange={(e) => setKycFields({...kycFields, email: e.target.value})} className="bg-[#121027] border-[#292344] text-white" />
-                      <Input placeholder="Phone" value={kycFields.phone} onChange={(e) => setKycFields({...kycFields, phone: e.target.value})} className="bg-[#121027] border-[#292344] text-white" />
-                      <Input placeholder="Country" value={kycFields.country} onChange={(e) => setKycFields({...kycFields, country: e.target.value})} className="bg-[#121027] border-[#292344] text-white" />
-                      <select value={kycFields.idType} onChange={(e) => setKycFields({...kycFields, idType: e.target.value})} className="w-full bg-[#121027] border border-[#292344] rounded-xl px-4 py-3 text-white">
-                        <option>Passport</option><option>National ID</option><option>Driving Licence</option>
-                      </select>
-                      <Input placeholder="ID Number" value={kycFields.idNumber} onChange={(e) => setKycFields({...kycFields, idNumber: e.target.value})} className="bg-[#121027] border-[#292344] text-white" required />
-                      <Input placeholder="Age" value={kycFields.age} onChange={(e) => setKycFields({...kycFields, age: e.target.value})} className="bg-[#121027] border-[#292344] text-white" />
-                      <Input placeholder="Address" value={kycFields.address} onChange={(e) => setKycFields({...kycFields, address: e.target.value})} className="bg-[#121027] border-[#292344] text-white" />
-                      <Input placeholder="ID Document URL (front)" value={kycFields.frontUrl} onChange={(e) => setKycFields({...kycFields, frontUrl: e.target.value})} className="bg-[#121027] border-[#292344] text-white" required />
-                      <Input placeholder="Back-side URL (optional)" value={kycFields.backUrl} onChange={(e) => setKycFields({...kycFields, backUrl: e.target.value})} className="bg-[#121027] border-[#292344] text-white" />
-                      <Button type="submit" disabled={kycSubmitting} className="w-full bg-[#2DD4BF] hover:bg-[#14b8a6] text-black font-bold">
-                        {kycSubmitting ? <Loader2 className="animate-spin h-5 w-5 mx-auto" /> : 'Submit KYC'}
-                      </Button>
-                    </form>
-                  )}
-                </TabsContent>
-                <TabsContent value="redeem">
-                  {status === 'approved' && kyc?.status === 'approved' ? (
-                    <form onSubmit={handleRedeemSubmit} className="space-y-3">
-                      <div className="bg-[#121027] border border-[#292344] rounded-xl p-3">
-                        <p className="text-sm text-[#A9A6BD]">Available Earnings</p>
-                        <p className="text-2xl font-bold text-[#F5B83D]">{totalEarnings.toLocaleString()} coins</p>
-                      </div>
-                      <Input type="number" placeholder="Coins to redeem" value={payoutCoins} onChange={(e) => setPayoutCoins(e.target.value)} className="bg-[#121027] border-[#292344] text-white" required />
-                      <select value={payoutMethod} onChange={(e) => setPayoutMethod(e.target.value)} className="w-full bg-[#121027] border border-[#292344] rounded-xl px-4 py-3 text-white">
-                        <option>UPI</option><option>Bank Transfer</option><option>PayPal</option>
-                      </select>
-                      <Input placeholder="UPI ID / Bank details / PayPal email" value={payoutDetails} onChange={(e) => setPayoutDetails(e.target.value)} className="bg-[#121027] border-[#292344] text-white" required />
-                      <Button type="submit" disabled={payoutLoading} className="w-full bg-gradient-to-r from-[#F5B83D] to-[#f97316] text-black font-bold">
-                        {payoutLoading ? <Loader2 className="animate-spin h-5 w-5 mx-auto" /> : 'Request Redeem'}
-                      </Button>
-                    </form>
-                  ) : (
-                    <div className="text-center py-4 text-[#A9A6BD] text-sm">
-                      {status !== 'approved' ? 'You need to be an approved host to redeem.' : 'Complete KYC before redeeming.'}
-                    </div>
-                  )}
-                </TabsContent>
-              </Tabs>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        </section>
+      </main>
     </div>
   );
 }

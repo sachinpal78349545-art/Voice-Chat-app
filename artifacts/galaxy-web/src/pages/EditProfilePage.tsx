@@ -1,57 +1,131 @@
-import React, { useState, useRef } from "react";
-import { uploadToCloudinary } from "../lib/cloudinary";
-import { UserProfile, updateUser, AVATAR_LIST } from "../lib/userService";
-import { useToast } from "../lib/toastContext";
+import React, { useEffect, useRef, useState } from "react";
 import imageCompression from "browser-image-compression";
-import { Copy, Check, ChevronRight, Camera } from "lucide-react"; 
+import {
+  Camera,
+  CalendarDays,
+  Check,
+  ChevronDown,
+  Edit3,
+  FileImage,
+  Contact,
+  Loader2,
+  Save,
+  UserRound,
+  BadgeInfo,
+} from "lucide-react";
+import { uploadToCloudinary } from "../lib/cloudinary";
+import { AVATAR_LIST, updateUser, UserProfile } from "../lib/userService";
+import { useToast } from "../lib/toastContext";
+import "./EditProfilePage.css";
 
-interface Props { user: UserProfile; onUpdate: (u: UserProfile) => void; onBack: () => void; }
+interface Props {
+  user: UserProfile | null;
+  onUpdate: (u: UserProfile) => void;
+  onBack: () => void;
+}
+
+type FormState = {
+  name: string;
+  bio: string;
+  gender: string;
+  birthday: string;
+  avatar: string;
+};
+
+const GENDER_OPTIONS = ["Male", "Female", "Secret"];
+
+function getFormState(user: UserProfile | null): FormState {
+  return {
+    name: user?.name || "",
+    bio: user?.bio || "",
+    gender: GENDER_OPTIONS.includes(user?.gender || "") ? user!.gender : "Secret",
+    birthday: user?.birthday || "",
+    avatar: user?.avatar || "",
+  };
+}
+
+function formatBirthday(value: string): string {
+  if (!value) return "Add date of birth";
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return "Add date of birth";
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(year, month - 1, day));
+}
+
+function getInitials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .map(part => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "GR";
+}
 
 export default function EditProfilePage({ user, onUpdate, onBack }: Props) {
-  const [form, setForm] = useState({
-    name: user.name,
-    bio: user.bio,
-    gender: user.gender || "Secret",
-    birthday: user.birthday || "2000-01-01",
-    avatar: user.avatar,
-  });
-
+  const [form, setForm] = useState<FormState>(() => getFormState(user));
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadStep, setUploadStep] = useState("");
   const [saving, setSaving] = useState(false);
-  const [showPicker, setShowPicker] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saveError, setSaveError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
-  
-  // Custom Sheet Control matching native app clicks
-  const [activeSheet, setActiveSheet] = useState<"gender" | null>(null);
-
   const { showToast } = useToast();
 
-  const validate = (): boolean => {
-    const errs: Record<string, string> = {};
-    if (!form.name.trim()) errs.name = "Nickname cannot be empty";
-    if (form.name.length > 30) errs.name = "Max 30 characters allowed";
-    if (form.bio.length > 200) errs.bio = "Bio cannot exceed 200 characters";
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
+  useEffect(() => {
+    if (user) setForm(getFormState(user));
+  }, [user?.uid]);
+
+  if (!user) {
+    return (
+      <div className="edit-profile-page edit-profile-page--loading" aria-label="Loading profile">
+        <div className="edit-profile-shell">
+          <div className="edit-profile-skeleton edit-profile-skeleton--title" />
+          <div className="edit-profile-skeleton edit-profile-skeleton--subtitle" />
+          <div className="edit-profile-skeleton edit-profile-skeleton--avatar" />
+          <div className="edit-profile-skeleton edit-profile-skeleton--card" />
+        </div>
+      </div>
+    );
+  }
+
+  const avatarIsImage = form.avatar.startsWith("http") || form.avatar.startsWith("data:");
+  const permanentId = user.userId || "";
+
+  const updateField = <K extends keyof FormState>(field: K, value: FormState[K]) => {
+    setForm(current => ({ ...current, [field]: value }));
+    if (errors[field]) {
+      setErrors(current => {
+        const next = { ...current };
+        delete next[field];
+        return next;
+      });
+    }
+    setSaveError("");
   };
 
-  const handleCopyId = () => {
-    navigator.clipboard.writeText(user.uid);
-    setCopied(true);
-    showToast("ID Copied!", "success");
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopyId = async () => {
+    if (!permanentId) return;
+    try {
+      await navigator.clipboard?.writeText(permanentId);
+      showToast("User ID copied", "success");
+    } catch {
+      showToast("Could not copy the User ID", "error");
+    }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
     if (!file) return;
+
     setUploading(true);
-    setUploadProgress(10);
-    setUploadStep("Compressing...");
+    setUploadProgress(8);
+    setSaveError("");
 
     try {
       let compressed: Blob = file;
@@ -63,207 +137,285 @@ export default function EditProfilePage({ user, onUpdate, onBack }: Props) {
           fileType: "image/jpeg",
           initialQuality: 0.6,
         });
-      } catch (ce) {
-        console.warn("[DP] Compression failed:", ce);
+      } catch (compressionError) {
+        console.warn("[EditProfile] Image compression failed; uploading original:", compressionError);
       }
 
-      setUploadProgress(30);
-      setUploadStep("Uploading...");
-
+      setUploadProgress(28);
       const blob = new Blob([compressed], { type: "image/jpeg" });
-      const url = await uploadToCloudinary(blob, (pct) => {
-        setUploadProgress(30 + Math.round(pct * 0.7));
+      const url = await uploadToCloudinary(blob, progress => {
+        setUploadProgress(28 + Math.round(progress * 0.72));
       });
 
-      setForm(f => ({ ...f, avatar: url }));
-      showToast("Photo updated!", "success");
-    } catch (err: any) {
-      showToast("Upload failed!", "error");
+      updateField("avatar", url);
+      setShowAvatarPicker(false);
+      showToast("Profile photo updated", "success");
+    } catch (error) {
+      console.error("[EditProfile] Profile photo upload failed:", error);
+      setSaveError("We couldn't update your profile photo. Please try again.");
+      showToast("Photo upload failed", "error");
     } finally {
       setUploading(false);
       setUploadProgress(0);
     }
   };
 
+  const validate = () => {
+    const nextErrors: Record<string, string> = {};
+    const trimmedName = form.name.trim();
+
+    if (!trimmedName) nextErrors.name = "Display name cannot be empty.";
+    if (trimmedName.length > 30) nextErrors.name = "Display name must be 30 characters or fewer.";
+    if (form.bio.length > 200) nextErrors.bio = "Bio must be 200 characters or fewer.";
+
+    if (form.birthday) {
+      const birthday = new Date(`${form.birthday}T00:00:00`);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      if (
+        Number.isNaN(birthday.getTime()) ||
+        birthday.getFullYear() < 1900 ||
+        birthday > today
+      ) {
+        nextErrors.birthday = "Enter a valid date of birth.";
+      }
+    }
+
+    if (!GENDER_OPTIONS.includes(form.gender)) {
+      nextErrors.gender = "Choose a supported gender option.";
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
   const save = async () => {
     if (!validate()) return;
+
     setSaving(true);
+    setSaveError("");
+    const updatedFields = {
+      name: form.name.trim(),
+      bio: form.bio.trim(),
+      gender: form.gender,
+      birthday: form.birthday,
+      avatar: form.avatar,
+    };
+
     try {
-      const updated: UserProfile = { ...user, ...form };
-      await updateUser(user.uid, { 
-        name: form.name, 
-        bio: form.bio, 
-        gender: form.gender, 
-        birthday: form.birthday, 
-        avatar: form.avatar 
-      });
-      onUpdate(updated);
-      showToast("Changes saved!", "success");
-      setTimeout(() => onBack(), 1000);
-    } catch (err) {
-      showToast("Failed to save changes.", "error");
+      await updateUser(user.uid, updatedFields);
+      onUpdate({ ...user, ...updatedFields });
+      showToast("Changes saved", "success");
+      window.setTimeout(onBack, 500);
+    } catch (error) {
+      console.error("[EditProfile] Profile save failed:", error);
+      setSaveError("We couldn't save your changes. Please check your connection and try again.");
+      showToast("Failed to save changes", "error");
     } finally {
       setSaving(false);
     }
   };
 
-  const isUrl = form.avatar.startsWith("http") || form.avatar.startsWith("data:");
-
   return (
-    // Pura outer screen background is smooth custom gradient mix as requested
-    <div className="page-scroll" style={{ background: "linear-gradient(to bottom, #1c103f, #0f0826)", minHeight: "100vh", color: "#FFFFFF" }}>
-      
-      {/* --- Native ChaloTalk Style Top Header --- */}
-      <div style={{ 
-        display: "flex", alignItems: "center", justifyContent: "space-between", padding: "54px 16px 16px", 
-        borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(28, 16, 63, 0.95)", position: "sticky", top: 0, zIndex: 100
-      }}>
-        <button onClick={onBack} style={{
-          background: "transparent", border: "none", cursor: "pointer", fontSize: 26, color: "#FFFFFF",
-          display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32
-        }}>{"\u2039"}</button>
-        
-        <h1 style={{ fontSize: 16, fontWeight: 600, flex: 1, textAlign: "center", color: "#FFFFFF" }}>Edit Profile</h1>
-        
-        <button onClick={save} disabled={saving} style={{ 
-          background: "transparent", color: saving ? "rgba(255,255,255,0.4)" : "#ff6482", 
-          border: "none", fontSize: 15, fontWeight: 600, cursor: "pointer" 
-        }}>
-          {saving ? "Saving..." : "Save"}
-        </button>
-      </div>
+    <div className="edit-profile-page">
+      <div className="edit-profile-shell">
+        <header className="edit-profile-header">
+          <button className="edit-profile-circle-button" onClick={onBack} aria-label="Go back">
+            <span aria-hidden="true">←</span>
+          </button>
+          <div className="edit-profile-heading">
+            <h1>Edit Profile</h1>
+            <p>Update your information and manage your profile</p>
+          </div>
+          <button
+            className="edit-profile-circle-button edit-profile-circle-button--check"
+            onClick={save}
+            disabled={saving || uploading}
+            aria-label="Save changes"
+          >
+            {saving ? <Loader2 size={19} className="edit-profile-spin" /> : <Check size={21} strokeWidth={2.5} />}
+          </button>
+        </header>
 
-      <div style={{ padding: "20px 16px", display: "flex", flexDirection: "column", gap: 20 }}>
-        
-        {/* --- Center Avatar Container with Edit Camera Trigger --- */}
-        <div style={{ display: "flex", justifyContent: "center", margin: "10px 0 15px" }}>
-          <div style={{ position: "relative" }}>
-            <div onClick={() => fileRef.current?.click()} style={{
-              width: 88, height: 88, borderRadius: 44, overflow: "hidden",
-              background: "rgba(255,255,255,0.06)", border: "1.5px solid rgba(255,255,255,0.15)",
-              display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer"
-            }}>
-              {isUrl ? (
-                <img src={form.avatar} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <section className="edit-profile-photo-section" aria-label="Profile photo">
+          <button
+            className="edit-profile-avatar-button"
+            onClick={() => setShowAvatarPicker(true)}
+            aria-label="Change profile picture"
+          >
+            <span className="edit-profile-avatar">
+              {avatarIsImage ? (
+                <img src={form.avatar} alt={`${form.name || "Your"} profile`} />
               ) : (
-                <span style={{ fontSize: 42 }}>{form.avatar}</span>
+                <span className="edit-profile-avatar-fallback">
+                  {form.avatar || getInitials(form.name)}
+                </span>
               )}
+              {uploading && (
+                <span className="edit-profile-avatar-loading">
+                  <Loader2 size={25} className="edit-profile-spin" />
+                  <small>{uploadProgress}%</small>
+                </span>
+              )}
+            </span>
+          </button>
+          <button
+            className="edit-profile-camera-button"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            aria-label="Upload a new profile picture"
+          >
+            <Camera size={17} strokeWidth={2.5} />
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="edit-profile-file-input"
+            onChange={handleImageUpload}
+          />
+          <button className="edit-profile-photo-caption" onClick={() => setShowAvatarPicker(true)}>
+            Tap to change profile picture
+          </button>
+        </section>
+
+        <section className="edit-profile-info-card" aria-label="Profile information">
+          <div className={`edit-profile-row${errors.name ? " edit-profile-row--error" : ""}`}>
+            <span className="edit-profile-row-icon edit-profile-row-icon--lavender"><UserRound size={20} /></span>
+            <div className="edit-profile-row-content">
+              <label htmlFor="edit-profile-name">Display Name</label>
+              <input
+                id="edit-profile-name"
+                value={form.name}
+                onChange={event => updateField("name", event.target.value)}
+                maxLength={30}
+                placeholder="Your display name"
+                aria-invalid={Boolean(errors.name)}
+              />
+              {errors.name && <span className="edit-profile-field-error">{errors.name}</span>}
             </div>
-            {uploading && (
-              <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", borderRadius: 44, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <div style={{ width: 18, height: 18, borderRadius: 9, border: "2px solid rgba(255,255,255,0.2)", borderTopColor: "#fff", animation: "spin 0.7s linear infinite" }} />
+            <Edit3 className="edit-profile-row-action" size={19} strokeWidth={2.2} aria-hidden="true" />
+          </div>
+
+          <div className={`edit-profile-row${errors.bio ? " edit-profile-row--error" : ""}`}>
+            <span className="edit-profile-row-icon edit-profile-row-icon--pink"><Edit3 size={19} /></span>
+            <div className="edit-profile-row-content">
+              <label htmlFor="edit-profile-bio">Bio</label>
+              <input
+                id="edit-profile-bio"
+                value={form.bio}
+                onChange={event => updateField("bio", event.target.value)}
+                maxLength={200}
+                placeholder="Tell people about you"
+                aria-invalid={Boolean(errors.bio)}
+              />
+              {errors.bio && <span className="edit-profile-field-error">{errors.bio}</span>}
+            </div>
+            <Edit3 className="edit-profile-row-action" size={19} strokeWidth={2.2} aria-hidden="true" />
+          </div>
+
+          <div className={`edit-profile-row${errors.birthday ? " edit-profile-row--error" : ""}`}>
+            <span className="edit-profile-row-icon edit-profile-row-icon--violet"><CalendarDays size={20} /></span>
+            <div className="edit-profile-row-content">
+              <label htmlFor="edit-profile-birthday">Date of Birth</label>
+              <div className="edit-profile-date-control">
+                <span className={!form.birthday ? "edit-profile-value--muted" : ""}>{formatBirthday(form.birthday)}</span>
+                <input
+                  id="edit-profile-birthday"
+                  type="date"
+                  value={form.birthday}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={event => updateField("birthday", event.target.value)}
+                  aria-label="Date of Birth"
+                  aria-invalid={Boolean(errors.birthday)}
+                />
               </div>
-            )}
-            {/* Absolute Bottom Pink Camera Badge matching ChaloTalk layout */}
-            <div onClick={() => setShowPicker(true)} style={{
-              position: "absolute", bottom: -2, right: -2, background: "#ff6482", 
-              borderRadius: "50%", padding: 6, border: "2px solid #1c103f", display: "flex", cursor: "pointer"
-            }}>
-              <Camera size={12} color="#fff" />
+              {errors.birthday && <span className="edit-profile-field-error">{errors.birthday}</span>}
             </div>
-          </div>
-          <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleImageUpload} />
-        </div>
-
-        {/* --- ChaloTalk Styled Block Container (Solid dark transparent background layer) --- */}
-        <div style={{ background: "rgba(0, 0, 0, 0.25)", borderRadius: 12, overflow: "hidden", border: "1px solid rgba(255,255,255,0.04)" }}>
-          
-          {/* Row 1: Nickname */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-            <span style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", fontWeight: 400 }}>Nickname</span>
-            <input style={{ background: "transparent", border: "none", color: "#FFFFFF", textAlign: "right", fontSize: 14, fontWeight: 500, outline: "none", width: "60%" }} 
-              value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Enter nickname" />
+            <CalendarDays className="edit-profile-row-action" size={19} strokeWidth={2.2} aria-hidden="true" />
           </div>
 
-          {/* Row 2: Account ID Block */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-            <span style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", fontWeight: 400 }}>ID</span>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ fontSize: 14, color: "rgba(255,255,255,0.4)" }}>
-                {user.uid.toUpperCase()}
-              </span>
-              <button onClick={handleCopyId} style={{ background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.3)", display: "flex", padding: 2 }}>
-                {copied ? <Check size={14} color="#10b981" /> : <Copy size={14} />}
+          <div className={`edit-profile-row${errors.gender ? " edit-profile-row--error" : ""}`}>
+            <span className="edit-profile-row-icon edit-profile-row-icon--blue"><BadgeInfo size={20} /></span>
+            <div className="edit-profile-row-content">
+              <label htmlFor="edit-profile-gender">Gender</label>
+              <div className="edit-profile-select-control">
+                <select
+                  id="edit-profile-gender"
+                  value={form.gender}
+                  onChange={event => updateField("gender", event.target.value)}
+                  aria-invalid={Boolean(errors.gender)}
+                >
+                  {GENDER_OPTIONS.map(option => <option key={option} value={option}>{option}</option>)}
+                </select>
+                <ChevronDown size={18} strokeWidth={2.4} aria-hidden="true" />
+              </div>
+              {errors.gender && <span className="edit-profile-field-error">{errors.gender}</span>}
+            </div>
+            <ChevronDown className="edit-profile-row-action edit-profile-row-action--chevron" size={19} strokeWidth={2.3} aria-hidden="true" />
+          </div>
+
+          <div className="edit-profile-row edit-profile-row--last">
+            <span className="edit-profile-row-icon edit-profile-row-icon--aqua"><Contact size={20} /></span>
+            <div className="edit-profile-row-content">
+              <span className="edit-profile-row-label">User ID</span>
+              <button className="edit-profile-id-value" onClick={handleCopyId} disabled={!permanentId}>
+                {permanentId || "Not available"}
               </button>
             </div>
+            <span className="edit-profile-readonly-badge">Cannot be changed</span>
           </div>
+        </section>
 
-          {/* Row 3: Gender Row Trigger */}
-          <div onClick={() => setActiveSheet("gender")} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", borderBottom: "1px solid rgba(255,255,255,0.05)", cursor: "pointer" }}>
-            <span style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", fontWeight: 400 }}>Gender</span>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <span style={{ fontSize: 14, color: "#FFFFFF" }}>{form.gender}</span>
-              <ChevronRight size={16} color="rgba(255,255,255,0.3)" />
-            </div>
-          </div>
+        {saveError && (
+          <p className="edit-profile-save-error" role="alert">{saveError}</p>
+        )}
 
-          {/* Row 4: Birthday Fields Row */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", cursor: "pointer" }}>
-            <span style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", fontWeight: 400 }}>Birthday</span>
-            <input type="date" style={{ background: "transparent", border: "none", color: "#FFFFFF", fontSize: 14, fontWeight: 500, outline: "none", cursor: "pointer", textAlign: "right", colorScheme: "dark" }}
-              value={form.birthday} onChange={e => setForm(f => ({ ...f, birthday: e.target.value }))} />
-          </div>
+        <button className="edit-profile-save-button" onClick={save} disabled={saving || uploading}>
+          {saving ? <Loader2 size={19} className="edit-profile-spin" /> : <Save size={19} strokeWidth={2.3} />}
+          <span>{saving ? "Saving Changes..." : "Save Changes"}</span>
+        </button>
 
-        </div>
-
-        {/* --- Bio Form Card Wrapper --- */}
-        <div style={{ background: "rgba(0, 0, 0, 0.25)", borderRadius: 12, padding: 16, border: "1px solid rgba(255,255,255,0.04)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, fontSize: 14, color: "rgba(255,255,255,0.6)", fontWeight: 400 }}>
-            <span>Bio</span>
-            <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 12 }}>{form.bio.length}/200</span>
-          </div>
-          <textarea style={{ 
-            width: "100%", color: "#FFFFFF", fontSize: 14, background: "transparent", border: "none", outline: "none", resize: "none", padding: 0, lineHeight: "1.4" 
-          }} rows={3} value={form.bio} onChange={e => setForm(f => ({ ...f, bio: e.target.value }))} placeholder="Introduce yourself..." />
-          {errors.name && <p style={{ fontSize: 12, color: "#ff6482", marginTop: 4 }}>{errors.name}</p>}
-          {errors.bio && <p style={{ fontSize: 12, color: "#ff6482", marginTop: 4 }}>{errors.bio}</p>}
-        </div>
-
+        <div className="edit-profile-bottom-space" />
       </div>
 
-      {/* --- NATIVE BOTTOM SHEET: GENDER FREQUENCY LIST --- */}
-      {activeSheet === "gender" && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 999 }} onClick={() => setActiveSheet(null)}>
-          <div style={{ width: "100%", maxWidth: 420, padding: "20px 16px 30px", background: "#1c123a", borderRadius: "20px 20px 0 0", animation: "slide-up 0.2s ease" }} onClick={e => e.stopPropagation()}>
-            <div style={{ width: 32, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 2, margin: "0 auto 16px" }} />
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              {["Male", "Female", "Secret"].map(g => (
-                <button key={g} onClick={() => { setForm(f => ({ ...f, gender: g })); setActiveSheet(null); }} style={{
-                  width: "100%", padding: "16px 0", background: "transparent", border: "none",
-                  color: form.gender === g ? "#ff6482" : "#FFFFFF", fontSize: 15, fontWeight: form.gender === g ? "600" : "400", textAlign: "center", cursor: "pointer",
-                  borderBottom: "1px solid rgba(255,255,255,0.03)"
-                }}>{g}</button>
+      {showAvatarPicker && (
+        <div className="edit-profile-modal-backdrop" onClick={() => setShowAvatarPicker(false)}>
+          <div className="edit-profile-avatar-sheet" onClick={event => event.stopPropagation()}>
+            <div className="edit-profile-sheet-handle" />
+            <div className="edit-profile-sheet-heading">
+              <div>
+                <h2>Profile picture</h2>
+                <p>Choose a photo or use an avatar</p>
+              </div>
+              <button onClick={() => setShowAvatarPicker(false)} aria-label="Close profile picture picker">×</button>
+            </div>
+            <button className="edit-profile-upload-option" onClick={() => fileRef.current?.click()}>
+              <span className="edit-profile-upload-option-icon"><FileImage size={19} /></span>
+              <span>
+                <strong>Upload a photo</strong>
+                <small>Use a picture from your device</small>
+              </span>
+              <ChevronDown size={17} className="edit-profile-upload-arrow" />
+            </button>
+            <p className="edit-profile-avatar-option-label">Or choose an avatar</p>
+            <div className="edit-profile-avatar-grid">
+              {AVATAR_LIST.map(avatar => (
+                <button
+                  key={avatar}
+                  className={form.avatar === avatar ? "edit-profile-avatar-option edit-profile-avatar-option--active" : "edit-profile-avatar-option"}
+                  onClick={() => {
+                    updateField("avatar", avatar);
+                    setShowAvatarPicker(false);
+                  }}
+                >
+                  {avatar}
+                </button>
               ))}
             </div>
           </div>
         </div>
       )}
-
-      {/* --- CHALOTALK STYLE EMOJI PICKER MODAL --- */}
-      {showPicker && (
-        <div style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)",
-          display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 400,
-        }} onClick={() => setShowPicker(false)}>
-          <div style={{
-            width: "100%", maxWidth: 420, borderRadius: "20px 20px 0 0", padding: "20px 16px 30px", 
-            background: "#1c123a", borderTop: "1px solid rgba(255,255,255,0.05)"
-          }} onClick={e => e.stopPropagation()}>
-            <div style={{ width: 32, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 2, margin: "0 auto 16px" }} />
-            <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16, color: "rgba(255,255,255,0.6)", textAlign: "center" }}>Select Avatar Emoji</h2>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "center" }}>
-              {AVATAR_LIST.map(a => (
-                <button key={a} onClick={() => { setForm(f => ({ ...f, avatar: a })); setShowPicker(false); }} style={{
-                  width: 50, height: 50, borderRadius: 12, fontSize: 26, border: "none",
-                  background: form.avatar === a ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.03)",
-                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center"
-                }}>{a}</button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }
