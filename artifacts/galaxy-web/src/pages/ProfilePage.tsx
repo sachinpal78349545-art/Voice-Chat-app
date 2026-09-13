@@ -4311,7 +4311,7 @@ export default function ProfilePage({
           name={user.name}
           avatar={user.avatar}
           totalEarnings={user.totalEarnings || 0}
-          agencyId={user.agencyId}
+          agencyId={user.agencyId}[
           agencyRole={user.agencyRole}
           onClose={() => { closeSubPage(); setShowApply(false); }}
         />

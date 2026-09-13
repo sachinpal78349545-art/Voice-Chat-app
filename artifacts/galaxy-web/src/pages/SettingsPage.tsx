@@ -1,4 +1,4 @@
-// SettingsPage.tsx – Admin‑connected Privacy Policy & Terms of Service
+// SettingsPage.tsx – Admin‑connected Privacy Policy & Terms of Service (LIGHT THEME)
 import React, { useState, useEffect } from "react";
 import { UserProfile } from "../lib/userService";
 import { getCurrentLanguage } from "../lib/i18n";
@@ -36,13 +36,33 @@ interface SettingsPageProps {
   setNavBarVisible?: (visible: boolean) => void;
 }
 
+/* ============================================================
+   LIGHT THEME COLORS
+   ============================================================ */
+const C = {
+  bg: "#f2f4fc",
+  card: "rgba(255,255,255,0.88)",
+  cardBorder: "rgba(255,255,255,0.9)",
+  text: "#1e293b",          // slate-800
+  textMuted: "#64748b",     // slate-500
+  textLight: "#94a3b8",     // slate-400
+  iconBg: "rgba(139,92,246,0.1)",
+  iconText: "#7c3aed",
+  divider: "rgba(226,232,240,0.7)",
+  accent: "#7c3aed",
+  accentSoft: "rgba(139,92,246,0.08)",
+  danger: "#ef4444",
+  gold: "#d97706",
+  green: "#10b981",
+};
+
 function BottomSheet({ children }: { children: React.ReactNode }) {
   return (
     <div
       style={{
         position: "fixed",
         inset: 0,
-        background: "linear-gradient(160deg, #0d001a 0%, #1a0030 100%)",
+        background: C.bg,
         zIndex: 1100,
         display: "flex",
         flexDirection: "column",
@@ -83,7 +103,6 @@ export default function SettingsPage({
   const [godBadgeName, setGodBadgeName] = useState("");
   const [godBadgeIcon, setGodBadgeIcon] = useState("");
 
-  // Policy content states
   const [privacyContent, setPrivacyContent] = useState<string>("");
   const [termsContent, setTermsContent] = useState<string>("");
   const [showPrivacy, setShowPrivacy] = useState(false);
@@ -101,9 +120,9 @@ export default function SettingsPage({
   const [notifPermission, setNotifPermission] = useState<NotificationPermission>(
     typeof Notification !== "undefined" ? Notification.permission : "default"
   );
-  const [notifMessages, setNotifMessages]   = useState(() => localStorage.getItem("notif_messages")   !== "false");
-  const [notifFollows,  setNotifFollows]    = useState(() => localStorage.getItem("notif_follows")    !== "false");
-  const [notifOnline,   setNotifOnline]     = useState(() => localStorage.getItem("notif_online")     !== "false");
+  const [notifMessages, setNotifMessages] = useState(() => localStorage.getItem("notif_messages") !== "false");
+  const [notifFollows, setNotifFollows] = useState(() => localStorage.getItem("notif_follows") !== "false");
+  const [notifOnline, setNotifOnline] = useState(() => localStorage.getItem("notif_online") !== "false");
 
   const requestNotifPermission = async () => {
     if (typeof Notification === "undefined") {
@@ -123,12 +142,11 @@ export default function SettingsPage({
   const toggleNotif = (key: "messages" | "follows" | "online", val: boolean) => {
     localStorage.setItem(`notif_${key}`, String(val));
     if (key === "messages") setNotifMessages(val);
-    if (key === "follows")  setNotifFollows(val);
-    if (key === "online")   setNotifOnline(val);
+    if (key === "follows") setNotifFollows(val);
+    if (key === "online") setNotifOnline(val);
     if (val && notifPermission !== "granted") requestNotifPermission();
   };
 
-  // Navigation bar hider
   useEffect(() => {
     if (setNavBarVisible) setNavBarVisible(false);
     return () => {
@@ -136,9 +154,8 @@ export default function SettingsPage({
     };
   }, [setNavBarVisible]);
 
-  // Subscribe to conversations ONLY when showClearChatCache is true AND user exists
   useEffect(() => {
-    if (!user?.uid) return; // Fix permission denied on logout
+    if (!user?.uid) return;
     if (showClearChatCache) {
       const unsub = subscribeConversations(user.uid, setConversations);
       return unsub;
@@ -181,13 +198,12 @@ export default function SettingsPage({
 
   const handleCheckUpdate = async () => {
     setCheckingUpdate(true);
-    await new Promise(r => setTimeout(r, 800));
+    await new Promise((r) => setTimeout(r, 800));
     setLatestVersion("2.0.0");
     showToast("Your current app is the latest version.", "success");
     setCheckingUpdate(false);
   };
 
-  // ─── Fetch policy content from Firebase ────────────────────────────────
   const fetchPolicyContent = async (type: "privacy" | "terms") => {
     try {
       const path = type === "privacy" ? "appConfig/privacyPolicy" : "appConfig/termsOfService";
@@ -197,7 +213,6 @@ export default function SettingsPage({
         if (type === "privacy") setPrivacyContent(data.content || "");
         else setTermsContent(data.content || "");
       } else {
-        // Set a default placeholder if nothing in DB
         const defaultContent =
           type === "privacy"
             ? "Privacy Policy content not set. Please configure in Admin Panel."
@@ -263,14 +278,44 @@ export default function SettingsPage({
 
   return (
     <>
-      {/* Main Settings BottomSheet */}
+      {/* ============ MAIN SETTINGS ============ */}
       <BottomSheet>
+        {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 900 }}>⚙️ Settings</h2>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: "rgba(162,155,254,0.5)" }}>✕</button>
+          <h2 style={{ fontSize: 20, fontWeight: 900, color: C.text }}>⚙️ Settings</h2>
+          <button
+            onClick={onClose}
+            style={{
+              background: "rgba(255,255,255,0.9)",
+              border: "1px solid rgba(226,232,240,0.8)",
+              borderRadius: 12,
+              cursor: "pointer",
+              fontSize: 18,
+              color: C.textMuted,
+              width: 36,
+              height: 36,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            ✕
+          </button>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {/* Main list card */}
+        <div
+          style={{
+            background: C.card,
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            borderRadius: 20,
+            border: `1px solid ${C.cardBorder}`,
+            boxShadow: "0 8px 24px rgba(110,100,179,0.06)",
+            padding: "6px 0",
+            marginBottom: 16,
+          }}
+        >
           {SETTINGS_ITEMS.map((item, i) => (
             <React.Fragment key={item.label}>
               <button
@@ -280,64 +325,65 @@ export default function SettingsPage({
                   alignItems: "center",
                   gap: 12,
                   width: "100%",
-                  padding: "12px 8px",
+                  padding: "12px 14px",
                   background: "none",
                   border: "none",
                   cursor: "pointer",
                   fontFamily: "inherit",
-                  transition: "background 0.15s",
                   borderRadius: 12,
+                  transition: "background 0.15s",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(168,85,247,0.06)")}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(139,92,246,0.06)")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
               >
                 <div
                   style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    background: "rgba(168,85,247,0.08)",
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
+                    background: C.iconBg,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: 18,
+                    fontSize: 19,
                     flexShrink: 0,
                   }}
                 >
                   {item.icon}
                 </div>
                 <div style={{ flex: 1, textAlign: "left" }}>
-                  <p style={{ fontSize: 14, color: "rgba(255,255,255,0.85)", fontWeight: 600 }}>{item.label}</p>
-                  <p style={{ fontSize: 10, color: "rgba(139,122,170,0.4)", marginTop: 1 }}>{item.desc}</p>
+                  <p style={{ fontSize: 14, color: C.text, fontWeight: 600 }}>{item.label}</p>
+                  <p style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>{item.desc}</p>
                 </div>
                 {"badge" in item && (item as any).badge > 0 && (
                   <span
                     style={{
-                      minWidth: 20,
-                      height: 20,
-                      borderRadius: 10,
-                      background: "#a855f7",
+                      minWidth: 22,
+                      height: 22,
+                      borderRadius: 11,
+                      background: "linear-gradient(135deg,#7c3aed,#a855f7)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontSize: 9,
+                      fontSize: 10,
                       fontWeight: 800,
-                      padding: "0 5px",
+                      padding: "0 6px",
                       color: "#fff",
                     }}
                   >
                     {(item as any).badge}
                   </span>
                 )}
-                <span style={{ color: "rgba(139,122,170,0.2)", fontSize: 16, fontWeight: 300 }}>›</span>
+                <span style={{ color: C.textLight, fontSize: 18, fontWeight: 300 }}>›</span>
               </button>
               {i < SETTINGS_ITEMS.length - 1 && (
-                <div style={{ height: 1, background: "rgba(168,85,247,0.04)", marginLeft: 56 }} />
+                <div style={{ height: 1, background: C.divider, marginLeft: 66, marginRight: 14 }} />
               )}
             </React.Fragment>
           ))}
 
-          {/* Clear chat cache button */}
+          {/* Clear chat cache */}
+          <div style={{ height: 1, background: C.divider, marginLeft: 66, marginRight: 14 }} />
           <button
             onClick={() => setShowClearChatCache(true)}
             style={{
@@ -345,47 +391,63 @@ export default function SettingsPage({
               alignItems: "center",
               gap: 12,
               width: "100%",
-              padding: "12px 8px",
+              padding: "12px 14px",
               background: "none",
               border: "none",
               cursor: "pointer",
               fontFamily: "inherit",
               borderRadius: 12,
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(168,85,247,0.06)")}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(139,92,246,0.06)")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
           >
             <div
               style={{
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                background: "rgba(168,85,247,0.08)",
+                width: 40,
+                height: 40,
+                borderRadius: 12,
+                background: C.iconBg,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 18,
+                fontSize: 19,
                 flexShrink: 0,
               }}
             >
               💬
             </div>
             <div style={{ flex: 1, textAlign: "left" }}>
-              <p style={{ fontSize: 14, color: "rgba(255,255,255,0.85)", fontWeight: 600 }}>Clear chat cache</p>
+              <p style={{ fontSize: 14, color: C.text, fontWeight: 600 }}>Clear chat cache</p>
+              <p style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>Free up space</p>
             </div>
-            <span style={{ color: "rgba(139,122,170,0.2)", fontSize: 16 }}>›</span>
+            <span style={{ color: C.textLight, fontSize: 18 }}>›</span>
           </button>
         </div>
 
-        {/* 🔔 NOTIFICATION SETTINGS SECTION */}
-        <div style={{ marginTop: 16, padding: "14px 12px", background: "rgba(108,92,231,0.06)", borderRadius: 14, border: "1px solid rgba(108,92,231,0.14)" }}>
+        {/* ============ NOTIFICATION SETTINGS ============ */}
+        <div
+          style={{
+            background: C.card,
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            borderRadius: 20,
+            border: `1px solid ${C.cardBorder}`,
+            boxShadow: "0 8px 24px rgba(110,100,179,0.06)",
+            padding: "14px",
+            marginBottom: 16,
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 18 }}>🔔</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 20 }}>🔔</span>
               <div>
-                <p style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>Notification Settings</p>
-                <p style={{ fontSize: 10, color: "rgba(139,122,170,0.6)" }}>
-                  {notifPermission === "granted" ? "✅ Enabled" : notifPermission === "denied" ? "🚫 Blocked in browser" : "⚠️ Permission needed"}
+                <p style={{ fontSize: 14, fontWeight: 800, color: C.text }}>Notifications</p>
+                <p style={{ fontSize: 11, color: C.textMuted, marginTop: 1 }}>
+                  {notifPermission === "granted"
+                    ? "✅ Enabled"
+                    : notifPermission === "denied"
+                    ? "🚫 Blocked in browser"
+                    : "⚠️ Permission needed"}
                 </p>
               </div>
             </div>
@@ -393,9 +455,15 @@ export default function SettingsPage({
               <button
                 onClick={requestNotifPermission}
                 style={{
-                  background: "linear-gradient(135deg, #6C5CE7, #A29BFE)",
-                  border: "none", borderRadius: 20, padding: "6px 14px",
-                  color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer",
+                  background: "linear-gradient(135deg,#7c3aed,#a855f7)",
+                  border: "none",
+                  borderRadius: 20,
+                  padding: "7px 16px",
+                  color: "#fff",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  boxShadow: "0 4px 12px rgba(124,58,237,0.3)",
                 }}
               >
                 Enable
@@ -404,62 +472,89 @@ export default function SettingsPage({
           </div>
 
           {[
-            { key: "messages" as const, icon: "💬", label: "Messages",     desc: "When someone sends you a message",          val: notifMessages },
-            { key: "follows"  as const, icon: "👥", label: "New Followers", desc: "When someone follows you or you follow back", val: notifFollows  },
-            { key: "online"   as const, icon: "🟢", label: "Friend Online", desc: "When someone you follow comes online",       val: notifOnline   },
-          ].map(item => (
-            <div key={item.key} style={{ display: "flex", alignItems: "center", gap: 10, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.04)", marginTop: 2 }}>
-              <span style={{ fontSize: 16, width: 24, textAlign: "center" }}>{item.icon}</span>
+            { key: "messages" as const, icon: "💬", label: "Messages", desc: "When someone sends you a message", val: notifMessages },
+            { key: "follows" as const, icon: "👥", label: "New Followers", desc: "When someone follows you", val: notifFollows },
+            { key: "online" as const, icon: "🟢", label: "Friend Online", desc: "When someone you follow comes online", val: notifOnline },
+          ].map((item) => (
+            <div
+              key={item.key}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                paddingTop: 10,
+                marginTop: 6,
+                borderTop: `1px solid ${C.divider}`,
+              }}
+            >
+              <span style={{ fontSize: 17, width: 26, textAlign: "center" }}>{item.icon}</span>
               <div style={{ flex: 1 }}>
-                <p style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", fontWeight: 600 }}>{item.label}</p>
-                <p style={{ fontSize: 10, color: "rgba(139,122,170,0.5)" }}>{item.desc}</p>
+                <p style={{ fontSize: 13, color: C.text, fontWeight: 600 }}>{item.label}</p>
+                <p style={{ fontSize: 10, color: C.textMuted, marginTop: 1 }}>{item.desc}</p>
               </div>
               <button
                 onClick={() => toggleNotif(item.key, !item.val)}
                 style={{
-                  width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer",
-                  background: item.val && notifPermission === "granted"
-                    ? "linear-gradient(135deg, #6C5CE7, #A29BFE)"
-                    : "rgba(255,255,255,0.1)",
-                  position: "relative", transition: "background 0.25s", flexShrink: 0,
+                  width: 46,
+                  height: 26,
+                  borderRadius: 13,
+                  border: "none",
+                  cursor: "pointer",
+                  background:
+                    item.val && notifPermission === "granted"
+                      ? "linear-gradient(135deg,#7c3aed,#a855f7)"
+                      : "rgba(148,163,184,0.3)",
+                  position: "relative",
+                  transition: "background 0.25s",
+                  flexShrink: 0,
                 }}
               >
-                <div style={{
-                  position: "absolute", top: 3, width: 18, height: 18, borderRadius: 9, background: "#fff",
-                  transition: "left 0.25s",
-                  left: item.val && notifPermission === "granted" ? 23 : 3,
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
-                }} />
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 3,
+                    width: 20,
+                    height: 20,
+                    borderRadius: 10,
+                    background: "#fff",
+                    transition: "left 0.25s",
+                    left: item.val && notifPermission === "granted" ? 23 : 3,
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.2)",
+                  }}
+                />
               </button>
             </div>
           ))}
         </div>
 
-        {/* App Version Section */}
+        {/* ============ APP VERSION ============ */}
         <div
           style={{
-            marginTop: 16,
-            padding: "12px 8px",
-            background: "rgba(108,92,231,0.05)",
-            borderRadius: 12,
-            border: "1px solid rgba(108,92,231,0.1)",
+            background: C.card,
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            borderRadius: 20,
+            border: `1px solid ${C.cardBorder}`,
+            boxShadow: "0 8px 24px rgba(110,100,179,0.06)",
+            padding: "14px",
+            marginBottom: 16,
           }}
         >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>App Version</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: "#A29BFE" }}>{appVersion}</span>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: C.textMuted }}>App Version</span>
+            <span style={{ fontSize: 13, fontWeight: 800, color: C.accent }}>{appVersion}</span>
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>Latest Version</span>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: C.textMuted }}>Latest Version</span>
             <span
               style={{
                 fontSize: 13,
-                fontWeight: 700,
+                fontWeight: 800,
                 color: latestVersion
                   ? latestVersion > appVersion
-                    ? "#ff6482"
-                    : "#00e676"
-                  : "rgba(162,155,254,0.5)",
+                    ? C.danger
+                    : C.green
+                  : C.textLight,
               }}
             >
               {latestVersion || "Unknown"}
@@ -470,37 +565,50 @@ export default function SettingsPage({
             disabled={checkingUpdate}
             style={{
               width: "100%",
-              padding: "10px 0",
-              background: "rgba(108,92,231,0.15)",
-              border: "1px solid rgba(108,92,231,0.3)",
+              padding: "12px 0",
+              background: "linear-gradient(135deg,#7c3aed,#a855f7)",
+              border: "none",
               borderRadius: 40,
-              color: "#A29BFE",
+              color: "#fff",
               fontWeight: 700,
               fontSize: 13,
               cursor: checkingUpdate ? "default" : "pointer",
               opacity: checkingUpdate ? 0.6 : 1,
+              boxShadow: "0 6px 16px rgba(124,58,237,0.25)",
             }}
           >
             {checkingUpdate ? "Checking..." : "Check for Updates"}
           </button>
         </div>
 
-        {/* Administration section (unchanged) */}
+        {/* ============ ADMINISTRATION ============ */}
         {(user.globalRole === "official" || isAdmin) && (
-          <>
-            <div style={{ height: 1, background: "rgba(255,215,0,0.1)", margin: "12px 0" }} />
+          <div
+            style={{
+              background: C.card,
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              borderRadius: 20,
+              border: `1px solid ${C.cardBorder}`,
+              boxShadow: "0 8px 24px rgba(110,100,179,0.06)",
+              padding: "10px 0",
+              marginBottom: 16,
+            }}
+          >
             <p
               style={{
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: 800,
-                color: "rgba(255,215,0,0.4)",
+                color: C.gold,
                 textTransform: "uppercase",
-                letterSpacing: 1.5,
-                marginBottom: 8,
+                letterSpacing: 1.4,
+                padding: "6px 16px 4px",
+                margin: 0,
               }}
             >
               Administration
             </p>
+
             {(user.globalRole === "official" || isAdmin) && (
               <button
                 onClick={() => {
@@ -514,34 +622,34 @@ export default function SettingsPage({
                   alignItems: "center",
                   gap: 12,
                   width: "100%",
-                  padding: "12px 8px",
+                  padding: "12px 14px",
                   background: "none",
                   border: "none",
                   cursor: "pointer",
                   fontFamily: "inherit",
-                  borderRadius: 12,
                 }}
               >
                 <div
                   style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    background: "rgba(0,255,255,0.08)",
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
+                    background: "rgba(6,182,212,0.12)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: 18,
+                    fontSize: 19,
                   }}
                 >
                   📜
                 </div>
                 <div style={{ flex: 1, textAlign: "left" }}>
-                  <p style={{ fontSize: 14, color: "#00ffff", fontWeight: 600 }}>Official Guidelines</p>
+                  <p style={{ fontSize: 14, color: "#0891b2", fontWeight: 700 }}>Official Guidelines</p>
                 </div>
-                <span style={{ color: "rgba(0,255,255,0.2)", fontSize: 16 }}>›</span>
+                <span style={{ color: C.textLight, fontSize: 18 }}>›</span>
               </button>
             )}
+
             {isAdmin && (
               <>
                 <button
@@ -551,33 +659,33 @@ export default function SettingsPage({
                     alignItems: "center",
                     gap: 12,
                     width: "100%",
-                    padding: "12px 8px",
+                    padding: "12px 14px",
                     background: "none",
                     border: "none",
                     cursor: "pointer",
                     fontFamily: "inherit",
-                    borderRadius: 12,
                   }}
                 >
                   <div
                     style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 10,
-                      background: "rgba(255,215,0,0.1)",
+                      width: 40,
+                      height: 40,
+                      borderRadius: 12,
+                      background: "rgba(217,119,6,0.12)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontSize: 18,
+                      fontSize: 19,
                     }}
                   >
                     🛡️
                   </div>
                   <div style={{ flex: 1, textAlign: "left" }}>
-                    <p style={{ fontSize: 14, color: "#FFD700", fontWeight: 600 }}>Admin Panel</p>
+                    <p style={{ fontSize: 14, color: C.gold, fontWeight: 700 }}>Admin Panel</p>
                   </div>
-                  <span style={{ color: "rgba(255,215,0,0.2)", fontSize: 16 }}>›</span>
+                  <span style={{ color: C.textLight, fontSize: 18 }}>›</span>
                 </button>
+
                 <button
                   onClick={() => {
                     onClose();
@@ -589,34 +697,34 @@ export default function SettingsPage({
                     alignItems: "center",
                     gap: 12,
                     width: "100%",
-                    padding: "12px 8px",
+                    padding: "12px 14px",
                     background: "none",
                     border: "none",
                     cursor: "pointer",
                     fontFamily: "inherit",
-                    borderRadius: 12,
                   }}
                 >
                   <div
                     style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 10,
-                      background: "rgba(0,230,118,0.12)",
+                      width: 40,
+                      height: 40,
+                      borderRadius: 12,
+                      background: "rgba(16,185,129,0.12)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontSize: 18,
+                      fontSize: 19,
                     }}
                   >
                     💳
                   </div>
                   <div style={{ flex: 1, textAlign: "left" }}>
-                    <p style={{ fontSize: 14, color: "#00e676", fontWeight: 600 }}>Recharge Approvals</p>
-                    <p style={{ fontSize: 10, color: "rgba(0,230,118,0.5)" }}>Approve UPI recharge requests</p>
+                    <p style={{ fontSize: 14, color: C.green, fontWeight: 700 }}>Recharge Approvals</p>
+                    <p style={{ fontSize: 10, color: C.textMuted, marginTop: 1 }}>Approve UPI recharge requests</p>
                   </div>
-                  <span style={{ color: "rgba(0,230,118,0.2)", fontSize: 16 }}>›</span>
+                  <span style={{ color: C.textLight, fontSize: 18 }}>›</span>
                 </button>
+
                 <button
                   onClick={() => handleAction("godMode")}
                   style={{
@@ -624,35 +732,36 @@ export default function SettingsPage({
                     alignItems: "center",
                     gap: 12,
                     width: "100%",
-                    padding: "12px 8px",
+                    padding: "12px 14px",
                     background: "none",
                     border: "none",
                     cursor: "pointer",
                     fontFamily: "inherit",
-                    borderRadius: 12,
                   }}
                 >
                   <div
                     style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 10,
-                      background: "linear-gradient(135deg, rgba(191,0,255,0.15), rgba(0,255,255,0.08))",
+                      width: 40,
+                      height: 40,
+                      borderRadius: 12,
+                      background: "linear-gradient(135deg, rgba(191,0,255,0.15), rgba(6,182,212,0.12))",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontSize: 18,
+                      fontSize: 19,
                     }}
                   >
                     ⚡
                   </div>
                   <div style={{ flex: 1, textAlign: "left" }}>
-                    <p style={{ fontSize: 14, fontWeight: 600 }}>
-                      <span style={{ color: "#bf00ff" }}>God</span> <span style={{ color: "#00ffff" }}>Mode</span>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: C.text }}>
+                      <span style={{ color: "#9333ea" }}>God</span>{" "}
+                      <span style={{ color: "#0891b2" }}>Mode</span>
                     </p>
                   </div>
-                  <span style={{ color: "rgba(191,0,255,0.2)", fontSize: 16 }}>›</span>
+                  <span style={{ color: C.textLight, fontSize: 18 }}>›</span>
                 </button>
+
                 <button
                   onClick={() => handleAction("reportQueue")}
                   style={{
@@ -660,175 +769,240 @@ export default function SettingsPage({
                     alignItems: "center",
                     gap: 12,
                     width: "100%",
-                    padding: "12px 8px",
+                    padding: "12px 14px",
                     background: "none",
                     border: "none",
                     cursor: "pointer",
                     fontFamily: "inherit",
-                    borderRadius: 12,
                   }}
                 >
                   <div
                     style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 10,
-                      background: "rgba(255,150,50,0.1)",
+                      width: 40,
+                      height: 40,
+                      borderRadius: 12,
+                      background: "rgba(249,115,22,0.12)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontSize: 18,
+                      fontSize: 19,
                     }}
                   >
                     📋
                   </div>
                   <div style={{ flex: 1, textAlign: "left" }}>
-                    <p style={{ fontSize: 14, color: "#FFA726", fontWeight: 600 }}>Report Queue</p>
+                    <p style={{ fontSize: 14, color: "#ea580c", fontWeight: 700 }}>Report Queue</p>
                   </div>
-                  <span style={{ color: "rgba(255,150,50,0.2)", fontSize: 16 }}>›</span>
+                  <span style={{ color: C.textLight, fontSize: 18 }}>›</span>
                 </button>
               </>
             )}
-          </>
+          </div>
         )}
 
-        <div style={{ height: 1, background: "rgba(255,100,130,0.08)", margin: "12px 0" }} />
-
-        {/* Delete Account button */}
-        <button
-          onClick={() => setShowDeleteReason(true)}
+        {/* ============ DANGER ZONE ============ */}
+        <div
           style={{
-            width: "100%",
-            textAlign: "left",
-            padding: "12px 8px",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontFamily: "inherit",
-            borderRadius: 12,
-            color: "#ff5555",
-            fontWeight: 600,
+            background: C.card,
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            borderRadius: 20,
+            border: `1px solid rgba(239,68,68,0.15)`,
+            boxShadow: "0 8px 24px rgba(110,100,179,0.06)",
+            padding: "6px 0",
           }}
         >
-          ⚠️ Delete Account
-        </button>
-
-        {/* Log Out button */}
-        <button
-          onClick={onLogout}
-          className="pf-logout-btn"
-          style={{
-            width: "100%",
-            textAlign: "left",
-            padding: "12px 8px",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontFamily: "inherit",
-            borderRadius: 12,
-            color: "#ff6482",
-            fontWeight: 600,
-          }}
-        >
-          🚪 Log Out
-        </button>
+          <button
+            onClick={() => setShowDeleteReason(true)}
+            style={{
+              width: "100%",
+              textAlign: "left",
+              padding: "14px 16px",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              color: C.danger,
+              fontWeight: 700,
+              fontSize: 14,
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
+            ⚠️ Delete Account
+          </button>
+          <div style={{ height: 1, background: C.divider, marginLeft: 16, marginRight: 16 }} />
+          <button
+            onClick={onLogout}
+            style={{
+              width: "100%",
+              textAlign: "left",
+              padding: "14px 16px",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              color: C.danger,
+              fontWeight: 700,
+              fontSize: 14,
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
+            🚪 Log Out
+          </button>
+        </div>
       </BottomSheet>
 
-      {/* Privacy Policy BottomSheet – Dynamic Content */}
+      {/* ============ PRIVACY POLICY ============ */}
       {showPrivacy && (
         <BottomSheet>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexShrink: 0 }}>
-            <h2 style={{ fontSize: 18, fontWeight: 900, color: "#00ffff" }}>📜 Privacy Policy</h2>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <h2 style={{ fontSize: 19, fontWeight: 900, color: "#0891b2" }}>📜 Privacy Policy</h2>
             <button
               onClick={() => setShowPrivacy(false)}
               style={{
-                background: "none",
-                border: "none",
+                background: "rgba(255,255,255,0.9)",
+                border: "1px solid rgba(226,232,240,0.8)",
+                borderRadius: 12,
                 cursor: "pointer",
-                fontSize: 20,
-                color: "rgba(162,155,254,0.5)",
+                fontSize: 18,
+                color: C.textMuted,
+                width: 36,
+                height: 36,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
               ✕
             </button>
           </div>
-          <div style={{ flex: 1, overflowY: "auto", padding: "4px 0 20px 0" }}>
-            <div style={{ fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>
+          <div
+            style={{
+              background: C.card,
+              borderRadius: 20,
+              border: `1px solid ${C.cardBorder}`,
+              padding: 18,
+              boxShadow: "0 8px 24px rgba(110,100,179,0.06)",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 14,
+                color: C.text,
+                lineHeight: 1.8,
+                whiteSpace: "pre-wrap",
+              }}
+            >
               {privacyContent || "Loading privacy policy..."}
             </div>
           </div>
         </BottomSheet>
       )}
 
-      {/* Terms of Service BottomSheet – Dynamic Content */}
+      {/* ============ TERMS OF SERVICE ============ */}
       {showTerms && (
         <BottomSheet>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexShrink: 0 }}>
-            <h2 style={{ fontSize: 18, fontWeight: 900, color: "#FFD700" }}>⚖️ Terms of Service</h2>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <h2 style={{ fontSize: 19, fontWeight: 900, color: C.gold }}>⚖️ Terms of Service</h2>
             <button
               onClick={() => setShowTerms(false)}
               style={{
-                background: "none",
-                border: "none",
+                background: "rgba(255,255,255,0.9)",
+                border: "1px solid rgba(226,232,240,0.8)",
+                borderRadius: 12,
                 cursor: "pointer",
-                fontSize: 20,
-                color: "rgba(162,155,254,0.5)",
+                fontSize: 18,
+                color: C.textMuted,
+                width: 36,
+                height: 36,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
               ✕
             </button>
           </div>
-          <div style={{ flex: 1, overflowY: "auto", padding: "4px 0 20px 0" }}>
-            <div style={{ fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>
+          <div
+            style={{
+              background: C.card,
+              borderRadius: 20,
+              border: `1px solid ${C.cardBorder}`,
+              padding: 18,
+              boxShadow: "0 8px 24px rgba(110,100,179,0.06)",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 14,
+                color: C.text,
+                lineHeight: 1.8,
+                whiteSpace: "pre-wrap",
+              }}
+            >
               {termsContent || "Loading terms of service..."}
             </div>
           </div>
         </BottomSheet>
       )}
 
-      {/* Clear Chat Cache Modal */}
+      {/* ============ CLEAR CHAT CACHE ============ */}
       {showClearChatCache && (
         <div
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,0.85)",
+            background: "rgba(15,23,42,0.4)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
             zIndex: 1200,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            padding: 16,
           }}
         >
           <div
             style={{
-              background: "#0F0F1A",
-              width: "90%",
+              background: "#fff",
+              width: "100%",
               maxWidth: 400,
               borderRadius: 24,
               padding: 20,
               maxHeight: "80%",
               overflowY: "auto",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <h3 style={{ fontSize: 18, fontWeight: 900 }}>Clear chat cache</h3>
+              <h3 style={{ fontSize: 18, fontWeight: 900, color: C.text }}>Clear chat cache</h3>
               <button
                 onClick={() => setShowClearChatCache(false)}
-                style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#fff" }}
+                style={{
+                  background: "rgba(241,245,249,0.9)",
+                  border: "none",
+                  fontSize: 18,
+                  cursor: "pointer",
+                  color: C.textMuted,
+                  width: 34,
+                  height: 34,
+                  borderRadius: 12,
+                }}
               >
                 ✕
               </button>
             </div>
             <div style={{ marginBottom: 12 }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, color: C.text, fontSize: 13 }}>
                 <input
                   type="checkbox"
-                  checked={
-                    selectedConvIds.size === conversations.length && conversations.length > 0
-                  }
+                  checked={selectedConvIds.size === conversations.length && conversations.length > 0}
                   onChange={(e) => {
-                    if (e.target.checked)
-                      setSelectedConvIds(new Set(conversations.map((c) => c.id)));
+                    if (e.target.checked) setSelectedConvIds(new Set(conversations.map((c) => c.id)));
                     else setSelectedConvIds(new Set());
                   }}
                 />
@@ -841,7 +1015,7 @@ export default function SettingsPage({
                 const name = conv.participantNames[otherIdx];
                 const uid = conv.participants[otherIdx];
                 return (
-                  <label key={conv.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <label key={conv.id} style={{ display: "flex", alignItems: "center", gap: 8, color: C.text, fontSize: 13 }}>
                     <input
                       type="checkbox"
                       checked={selectedConvIds.has(conv.id)}
@@ -854,7 +1028,7 @@ export default function SettingsPage({
                     />
                     <div>
                       <p style={{ fontWeight: 600 }}>{name}</p>
-                      <p style={{ fontSize: 10, color: "rgba(162,155,254,0.5)" }}>ID: {uid}</p>
+                      <p style={{ fontSize: 10, color: C.textMuted }}>ID: {uid}</p>
                     </div>
                   </label>
                 );
@@ -866,10 +1040,12 @@ export default function SettingsPage({
               style={{
                 width: "100%",
                 padding: "12px 0",
-                background: "linear-gradient(135deg, #6C5CE7, #A29BFE)",
+                background: "linear-gradient(135deg,#7c3aed,#a855f7)",
                 border: "none",
                 borderRadius: 40,
                 fontWeight: 800,
+                color: "#fff",
+                fontSize: 14,
                 cursor: selectedConvIds.size === 0 ? "default" : "pointer",
                 opacity: selectedConvIds.size === 0 ? 0.5 : 1,
               }}
@@ -880,32 +1056,36 @@ export default function SettingsPage({
         </div>
       )}
 
-      {/* Delete Account Reason Modal */}
+      {/* ============ DELETE ACCOUNT REASON ============ */}
       {showDeleteReason && (
         <div
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,0.85)",
+            background: "rgba(15,23,42,0.4)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
             zIndex: 1200,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            padding: 16,
           }}
         >
           <div
             style={{
-              background: "#0F0F1A",
-              width: "90%",
+              background: "#fff",
+              width: "100%",
               maxWidth: 400,
               borderRadius: 24,
               padding: 20,
+              boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
             }}
           >
-            <h3 style={{ fontSize: 18, fontWeight: 900, marginBottom: 8 }}>
+            <h3 style={{ fontSize: 17, fontWeight: 900, marginBottom: 8, color: C.text }}>
               Are you sure you want to delete your account?
             </h3>
-            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 16 }}>
+            <p style={{ fontSize: 13, color: C.textMuted, marginBottom: 16 }}>
               Please let us know the reason you are leaving.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
@@ -917,7 +1097,7 @@ export default function SettingsPage({
                 "This content is not original",
                 "Other",
               ].map((reason) => (
-                <label key={reason} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <label key={reason} style={{ display: "flex", alignItems: "center", gap: 8, color: C.text, fontSize: 13 }}>
                   <input
                     type="radio"
                     name="deleteReason"
@@ -939,12 +1119,15 @@ export default function SettingsPage({
                   width: "100%",
                   padding: "10px",
                   borderRadius: 12,
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  color: "#fff",
+                  background: "#f8fafc",
+                  border: `1px solid ${C.divider}`,
+                  color: C.text,
                   marginBottom: 16,
                   resize: "none",
                   height: 80,
+                  fontSize: 13,
+                  fontFamily: "inherit",
+                  outline: "none",
                 }}
               />
             )}
@@ -954,10 +1137,13 @@ export default function SettingsPage({
                 style={{
                   flex: 1,
                   padding: "12px 0",
-                  background: "rgba(255,255,255,0.08)",
+                  background: "#f1f5f9",
                   border: "none",
                   borderRadius: 40,
                   cursor: "pointer",
+                  color: C.text,
+                  fontWeight: 700,
+                  fontSize: 13,
                 }}
               >
                 Cancel
@@ -967,10 +1153,12 @@ export default function SettingsPage({
                 style={{
                   flex: 1,
                   padding: "12px 0",
-                  background: "linear-gradient(135deg, #ff5555, #ff8888)",
+                  background: "linear-gradient(135deg,#ef4444,#f87171)",
                   border: "none",
                   borderRadius: 40,
                   fontWeight: 800,
+                  color: "#fff",
+                  fontSize: 13,
                   cursor: "pointer",
                 }}
               >
@@ -981,65 +1169,63 @@ export default function SettingsPage({
         </div>
       )}
 
-      {/* 🚀 GOD MODE BOTTOMSHEET – full original (unchanged) */}
+      {/* ============ GOD MODE ============ */}
       {showGodMode && (
         <div
           style={{
             position: "fixed",
             inset: 0,
             zIndex: 1200,
-            background: "#0a0618",
+            background: C.bg,
             display: "flex",
             flexDirection: "column",
             maxWidth: 430,
             margin: "0 auto",
           }}
         >
+          {/* Header */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
               padding: "52px 16px 12px",
-              background: "linear-gradient(180deg, rgba(191,0,255,0.15) 0%, transparent 100%)",
-              borderBottom: "1px solid rgba(191,0,255,0.2)",
+              background: "linear-gradient(180deg, rgba(139,92,246,0.15) 0%, transparent 100%)",
+              borderBottom: "1px solid rgba(139,92,246,0.15)",
             }}
           >
             <button
               onClick={() => setShowGodMode(false)}
               style={{
-                width: 36,
-                height: 36,
+                width: 38,
+                height: 38,
                 borderRadius: 12,
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(191,0,255,0.3)",
+                background: "rgba(255,255,255,0.9)",
+                border: "1px solid rgba(139,92,246,0.2)",
                 cursor: "pointer",
-                fontSize: 16,
-                color: "#fff",
+                fontSize: 18,
+                color: C.accent,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
               ‹
             </button>
-            <h2
-              style={{
-                fontSize: 18,
-                fontWeight: 900,
-                color: "#00ffff",
-                textShadow: "0 0 12px rgba(0,255,255,0.4)",
-              }}
-            >
+            <h2 style={{ fontSize: 18, fontWeight: 900, color: C.accent }}>
               ⚡ God Mode
             </h2>
-            <div style={{ width: 36 }} />
+            <div style={{ width: 38 }} />
           </div>
 
+          {/* Tabs */}
           <div
             style={{
               display: "flex",
               flexWrap: "wrap",
               gap: 8,
-              padding: "12px 12px",
-              borderBottom: "1px solid rgba(255,255,255,0.06)",
+              padding: "12px",
+              borderBottom: `1px solid ${C.divider}`,
               overflowX: "auto",
             }}
           >
@@ -1075,15 +1261,16 @@ export default function SettingsPage({
                   flexDirection: "column",
                   alignItems: "center",
                   gap: 3,
-                  minWidth: 68,
-                  background: godTab === id ? "rgba(0,255,255,0.15)" : "rgba(255,255,255,0.04)",
-                  color: godTab === id ? "#00ffff" : "rgba(255,255,255,0.4)",
+                  minWidth: 72,
+                  background: godTab === id ? "rgba(139,92,246,0.15)" : "rgba(255,255,255,0.7)",
+                  color: godTab === id ? C.accent : C.textMuted,
                   border:
                     godTab === id
-                      ? "1px solid rgba(0,255,255,0.3)"
-                      : "1px solid rgba(255,255,255,0.06)",
+                      ? "1px solid rgba(139,92,246,0.35)"
+                      : `1px solid ${C.cardBorder}`,
                   whiteSpace: "nowrap",
                   transition: "all 0.2s",
+                  boxShadow: godTab === id ? "0 4px 12px rgba(139,92,246,0.15)" : "none",
                 }}
               >
                 <span style={{ fontSize: 18 }}>{icon}</span>
@@ -1092,7 +1279,8 @@ export default function SettingsPage({
             ))}
           </div>
 
-          <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
+          {/* Body */}
+          <div style={{ flex: 1, overflowY: "auto", padding: 16 }}>
             {/* Universal User Lookup */}
             {(godTab === "deviceBan" ||
               godTab === "shadowBan" ||
@@ -1113,24 +1301,27 @@ export default function SettingsPage({
                     placeholder="Enter User ID..."
                     style={{
                       flex: 1,
-                      padding: "10px 14px",
-                      borderRadius: 12,
-                      border: "1px solid rgba(0,255,255,0.2)",
-                      background: "rgba(255,255,255,0.04)",
-                      color: "#fff",
+                      padding: "12px 14px",
+                      borderRadius: 14,
+                      border: `1px solid ${C.cardBorder}`,
+                      background: "rgba(255,255,255,0.9)",
+                      color: C.text,
                       fontSize: 13,
                       fontFamily: "monospace",
                       outline: "none",
                     }}
                   />
                   <button
-                    className="btn btn-sm"
                     style={{
-                      background: "rgba(0,255,255,0.12)",
-                      color: "#00ffff",
-                      border: "1px solid rgba(0,255,255,0.3)",
+                      background: "linear-gradient(135deg,#7c3aed,#a855f7)",
+                      color: "#fff",
+                      border: "none",
                       fontWeight: 700,
-                      padding: "8px 16px",
+                      padding: "10px 20px",
+                      borderRadius: 14,
+                      cursor: "pointer",
+                      fontSize: 15,
+                      boxShadow: "0 4px 12px rgba(124,58,237,0.25)",
                     }}
                     onClick={async () => {
                       if (!godUserId.trim()) return;
@@ -1152,36 +1343,32 @@ export default function SettingsPage({
                     {godLoading ? "..." : "🔍"}
                   </button>
                 </div>
+
                 {godUser && (
                   <div
                     style={{
                       padding: 12,
-                      borderRadius: 14,
+                      borderRadius: 16,
                       marginBottom: 12,
-                      background: "rgba(0,255,255,0.04)",
-                      border: "1px solid rgba(0,255,255,0.12)",
+                      background: "rgba(255,255,255,0.9)",
+                      border: `1px solid ${C.cardBorder}`,
+                      boxShadow: "0 6px 18px rgba(110,100,179,0.06)",
                     }}
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        marginBottom: 8,
-                      }}
-                    >
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                       <div
                         style={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: 18,
+                          width: 40,
+                          height: 40,
+                          borderRadius: 20,
                           fontSize: 18,
-                          background: "rgba(108,92,231,0.12)",
-                          border: "2px solid rgba(0,255,255,0.3)",
+                          background: "rgba(139,92,246,0.1)",
+                          border: "2px solid rgba(139,92,246,0.25)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                           overflow: "hidden",
+                          flexShrink: 0,
                         }}
                       >
                         {godUser.avatar?.startsWith("http") ? (
@@ -1199,13 +1386,14 @@ export default function SettingsPage({
                           godUser.avatar
                         )}
                       </div>
-                      <div>
-                        <p style={{ fontSize: 13, fontWeight: 700 }}>{godUser.name}</p>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ fontSize: 14, fontWeight: 800, color: C.text, margin: 0 }}>{godUser.name}</p>
                         <p
                           style={{
-                            fontSize: 10,
-                            color: "rgba(162,155,254,0.5)",
+                            fontSize: 11,
+                            color: C.textMuted,
                             fontFamily: "monospace",
+                            margin: "2px 0 0",
                           }}
                         >
                           ID: {godUser.userId} | Lv.{godUser.level || 1} | 💎
@@ -1213,6 +1401,7 @@ export default function SettingsPage({
                         </p>
                       </div>
                     </div>
+
                     <div
                       style={{
                         display: "flex",
@@ -1229,9 +1418,9 @@ export default function SettingsPage({
                             fontWeight: 800,
                             padding: "3px 10px",
                             borderRadius: 8,
-                            background: "rgba(255,60,60,0.15)",
-                            border: "1px solid rgba(255,60,60,0.3)",
-                            color: "#ff5555",
+                            background: "rgba(239,68,68,0.12)",
+                            border: "1px solid rgba(239,68,68,0.25)",
+                            color: C.danger,
                           }}
                         >
                           🔴 BANNED
@@ -1244,9 +1433,9 @@ export default function SettingsPage({
                             fontWeight: 800,
                             padding: "3px 10px",
                             borderRadius: 8,
-                            background: "rgba(255,60,60,0.15)",
-                            border: "1px solid rgba(255,60,60,0.3)",
-                            color: "#ff3333",
+                            background: "rgba(239,68,68,0.12)",
+                            border: "1px solid rgba(239,68,68,0.25)",
+                            color: C.danger,
                           }}
                         >
                           📱 DEVICE BANNED
@@ -1259,43 +1448,41 @@ export default function SettingsPage({
                             fontWeight: 800,
                             padding: "3px 10px",
                             borderRadius: 8,
-                            background: "rgba(191,0,255,0.15)",
-                            border: "1px solid rgba(191,0,255,0.3)",
-                            color: "#bf00ff",
+                            background: "rgba(168,85,247,0.12)",
+                            border: "1px solid rgba(168,85,247,0.25)",
+                            color: "#a855f7",
                           }}
                         >
                           👻 SHADOW BANNED
                         </span>
                       )}
-                      {!godUser.isBanned &&
-                        !godUser.deviceBanned &&
-                        !godUser.shadowBanned && (
-                          <span
-                            style={{
-                              fontSize: 10,
-                              fontWeight: 800,
-                              padding: "3px 10px",
-                              borderRadius: 8,
-                              background: "rgba(0,230,118,0.1)",
-                              border: "1px solid rgba(0,230,118,0.25)",
-                              color: "#00e676",
-                            }}
-                          >
-                            🟢 ACTIVE
-                          </span>
-                        )}
+                      {!godUser.isBanned && !godUser.deviceBanned && !godUser.shadowBanned && (
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 800,
+                            padding: "3px 10px",
+                            borderRadius: 8,
+                            background: "rgba(16,185,129,0.12)",
+                            border: "1px solid rgba(16,185,129,0.25)",
+                            color: C.green,
+                          }}
+                        >
+                          🟢 ACTIVE
+                        </span>
+                      )}
                     </div>
 
                     {(godUser.isBanned || godUser.deviceBanned || godUser.shadowBanned) && (
                       <button
-                        className="btn btn-full"
                         style={{
+                          width: "100%",
                           padding: "13px 0",
                           fontSize: 14,
                           fontWeight: 800,
-                          background: "rgba(0,230,118,0.15)",
-                          border: "2px solid rgba(0,230,118,0.4)",
-                          color: "#00e676",
+                          background: "rgba(16,185,129,0.12)",
+                          border: "2px solid rgba(16,185,129,0.35)",
+                          color: C.green,
                           borderRadius: 12,
                           cursor: "pointer",
                         }}
@@ -1308,9 +1495,7 @@ export default function SettingsPage({
                             return;
                           setGodLoading(true);
                           try {
-                            const { update: fbUpdate, ref: fbRef } = await import(
-                              "firebase/database"
-                            );
+                            const { update: fbUpdate, ref: fbRef } = await import("firebase/database");
                             const { db: fbDb } = await import("../lib/firebase");
                             await fbUpdate(fbRef(fbDb, `users/${godUser.uid}`), {
                               isBanned: false,
@@ -1343,16 +1528,21 @@ export default function SettingsPage({
               </div>
             )}
 
-            {/* Device Ban Panel */}
+            {/* Device Ban */}
             {godTab === "deviceBan" && godUser && (
               <div
-                className="card"
-                style={{ padding: 16, border: "1px solid rgba(255,60,60,0.2)" }}
+                style={{
+                  padding: 16,
+                  borderRadius: 18,
+                  background: "rgba(255,255,255,0.9)",
+                  border: "1px solid rgba(239,68,68,0.15)",
+                  boxShadow: "0 6px 18px rgba(110,100,179,0.06)",
+                }}
               >
-                <h3 style={{ fontSize: 14, fontWeight: 800, color: "#ff5555", marginBottom: 8 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 800, color: C.danger, marginBottom: 8, marginTop: 0 }}>
                   📱 Device ID Ban
                 </h3>
-                <p style={{ fontSize: 11, color: "rgba(162,155,254,0.5)", marginBottom: 12 }}>
+                <p style={{ fontSize: 11, color: C.textMuted, marginBottom: 12, lineHeight: 1.6 }}>
                   Permanently ban this user's device. They cannot create new accounts on the same
                   device.
                 </p>
@@ -1363,33 +1553,29 @@ export default function SettingsPage({
                       borderRadius: 12,
                       marginBottom: 12,
                       textAlign: "center",
-                      background: "rgba(255,60,60,0.08)",
-                      border: "1px solid rgba(255,60,60,0.2)",
+                      background: "rgba(239,68,68,0.08)",
+                      border: "1px solid rgba(239,68,68,0.2)",
                     }}
                   >
-                    <span style={{ fontSize: 12, fontWeight: 700, color: "#ff5555" }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: C.danger }}>
                       🔴 User is currently BANNED
                     </span>
                   </div>
                 )}
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
-                    className="btn"
                     style={{
                       flex: 1,
                       padding: "12px 0",
-                      background: "rgba(255,60,60,0.15)",
-                      border: "1px solid rgba(255,60,60,0.3)",
-                      color: "#ff5555",
+                      background: "rgba(239,68,68,0.12)",
+                      border: "1px solid rgba(239,68,68,0.3)",
+                      color: C.danger,
                       fontWeight: 800,
+                      borderRadius: 12,
+                      cursor: "pointer",
                     }}
                     onClick={async () => {
-                      if (
-                        !confirm(
-                          `Device ban ${godUser.name}? This bans their device permanently.`
-                        )
-                      )
-                        return;
+                      if (!confirm(`Device ban ${godUser.name}? This bans their device permanently.`)) return;
                       setGodLoading(true);
                       try {
                         await deviceBanUser(godUser.uid, user.uid);
@@ -1406,28 +1592,22 @@ export default function SettingsPage({
                   </button>
                   {(godUser.deviceBanned || godUser.isBanned) && (
                     <button
-                      className="btn"
                       style={{
                         flex: 1,
                         padding: "12px 0",
-                        background: "rgba(0,230,118,0.12)",
-                        border: "1px solid rgba(0,230,118,0.3)",
-                        color: "#00e676",
+                        background: "rgba(16,185,129,0.12)",
+                        border: "1px solid rgba(16,185,129,0.3)",
+                        color: C.green,
                         fontWeight: 800,
+                        borderRadius: 12,
+                        cursor: "pointer",
                       }}
                       onClick={async () => {
-                        if (
-                          !confirm(
-                            `Remove device ban and unban ${godUser.name}? They will be able to access the app again.`
-                          )
-                        )
-                          return;
+                        if (!confirm(`Remove device ban and unban ${godUser.name}?`)) return;
                         setGodLoading(true);
                         try {
                           await unbanUser(godUser.uid, user.uid);
-                          const { update: fbUpdate, ref: fbRef } = await import(
-                            "firebase/database"
-                          );
+                          const { update: fbUpdate, ref: fbRef } = await import("firebase/database");
                           const { db: fbDb } = await import("../lib/firebase");
                           await fbUpdate(fbRef(fbDb, `users/${godUser.uid}`), {
                             deviceBanned: false,
@@ -1441,30 +1621,29 @@ export default function SettingsPage({
                       }}
                       disabled={godLoading}
                     >
-                      ✅ Remove Device Ban
+                      ✅ Remove
                     </button>
                   )}
                 </div>
               </div>
             )}
 
-            {/* Shadow Ban Panel */}
+            {/* Shadow Ban */}
             {godTab === "shadowBan" && godUser && (
               <div
-                className="card"
                 style={{
                   padding: 16,
-                  border: `1px solid ${
-                    godUser.shadowBanned ? "rgba(0,230,118,0.2)" : "rgba(191,0,255,0.2)"
-                  }`,
+                  borderRadius: 18,
+                  background: "rgba(255,255,255,0.9)",
+                  border: `1px solid ${godUser.shadowBanned ? "rgba(16,185,129,0.25)" : "rgba(168,85,247,0.2)"}`,
+                  boxShadow: "0 6px 18px rgba(110,100,179,0.06)",
                 }}
               >
-                <h3 style={{ fontSize: 14, fontWeight: 800, color: "#bf00ff", marginBottom: 8 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 800, color: "#a855f7", marginBottom: 8, marginTop: 0 }}>
                   👻 Shadow Ban
                 </h3>
-                <p style={{ fontSize: 11, color: "rgba(162,155,254,0.5)", marginBottom: 12 }}>
-                  User can still use the app but their messages are hidden from others. They won't
-                  know they're banned.
+                <p style={{ fontSize: 11, color: C.textMuted, marginBottom: 12, lineHeight: 1.6 }}>
+                  User can still use the app but their messages are hidden from others.
                 </p>
                 {godUser.shadowBanned && (
                   <div
@@ -1473,11 +1652,11 @@ export default function SettingsPage({
                       borderRadius: 12,
                       marginBottom: 12,
                       textAlign: "center",
-                      background: "rgba(191,0,255,0.08)",
-                      border: "1px solid rgba(191,0,255,0.2)",
+                      background: "rgba(168,85,247,0.08)",
+                      border: "1px solid rgba(168,85,247,0.2)",
                     }}
                   >
-                    <span style={{ fontSize: 12, fontWeight: 700, color: "#ff5555" }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "#a855f7" }}>
                       🔴 User is SHADOW BANNED
                     </span>
                   </div>
@@ -1485,14 +1664,15 @@ export default function SettingsPage({
                 <div style={{ display: "flex", gap: 8 }}>
                   {!godUser.shadowBanned && (
                     <button
-                      className="btn"
                       style={{
                         flex: 1,
                         padding: "12px 0",
-                        background: "rgba(191,0,255,0.15)",
-                        border: "1px solid rgba(191,0,255,0.3)",
-                        color: "#bf00ff",
+                        background: "rgba(168,85,247,0.12)",
+                        border: "1px solid rgba(168,85,247,0.3)",
+                        color: "#a855f7",
                         fontWeight: 800,
+                        borderRadius: 12,
+                        cursor: "pointer",
                       }}
                       onClick={async () => {
                         setGodLoading(true);
@@ -1512,15 +1692,16 @@ export default function SettingsPage({
                   )}
                   {godUser.shadowBanned && (
                     <button
-                      className="btn"
                       style={{
                         flex: 1,
                         padding: "14px 0",
-                        background: "rgba(0,230,118,0.15)",
-                        border: "2px solid rgba(0,230,118,0.4)",
-                        color: "#00e676",
+                        background: "rgba(16,185,129,0.12)",
+                        border: "2px solid rgba(16,185,129,0.35)",
+                        color: C.green,
                         fontWeight: 800,
                         fontSize: 14,
+                        borderRadius: 12,
+                        cursor: "pointer",
                       }}
                       onClick={async () => {
                         setGodLoading(true);
@@ -1542,61 +1723,70 @@ export default function SettingsPage({
               </div>
             )}
 
-            {/* Room Hijack Panel */}
+            {/* Room Hijack */}
             {godTab === "roomHijack" && (
               <div
-                className="card"
-                style={{ padding: 16, border: "1px solid rgba(0,255,255,0.2)" }}
+                style={{
+                  padding: 16,
+                  borderRadius: 18,
+                  background: "rgba(255,255,255,0.9)",
+                  border: "1px solid rgba(6,182,212,0.2)",
+                  boxShadow: "0 6px 18px rgba(110,100,179,0.06)",
+                }}
               >
-                <h3 style={{ fontSize: 14, fontWeight: 800, color: "#00ffff", marginBottom: 8 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 800, color: "#0891b2", marginBottom: 8, marginTop: 0 }}>
                   🏠 Room Hijack
                 </h3>
-                <p style={{ fontSize: 11, color: "rgba(162,155,254,0.5)", lineHeight: 1.6, marginBottom: 12 }}>
-                  As Super Admin, you automatically bypass all room passwords and join as Owner
-                  with full control. This is always active.
+                <p style={{ fontSize: 11, color: C.textMuted, lineHeight: 1.6, marginBottom: 12 }}>
+                  As Super Admin, you automatically bypass all room passwords and join as Owner.
                 </p>
                 <div
                   style={{
                     padding: 14,
                     borderRadius: 14,
-                    background: "rgba(0,255,255,0.06)",
-                    border: "1px solid rgba(0,255,255,0.15)",
+                    background: "rgba(6,182,212,0.08)",
+                    border: "1px solid rgba(6,182,212,0.18)",
                     textAlign: "center",
                   }}
                 >
                   <div style={{ fontSize: 36, marginBottom: 8 }}>🛡️</div>
-                  <p style={{ fontSize: 13, fontWeight: 800, color: "#00ffff" }}>ACTIVE</p>
-                  <p style={{ fontSize: 11, color: "rgba(162,155,254,0.5)", marginTop: 4 }}>
+                  <p style={{ fontSize: 13, fontWeight: 800, color: "#0891b2", margin: 0 }}>ACTIVE</p>
+                  <p style={{ fontSize: 11, color: C.textMuted, marginTop: 4 }}>
                     Password bypass + Owner role in all rooms
                   </p>
                 </div>
               </div>
             )}
 
-            {/* Diamond Tracker Panel */}
+            {/* Diamond Tracker */}
             {godTab === "diamondTracker" && godUser && (
               <div
-                className="card"
-                style={{ padding: 16, border: "1px solid rgba(255,215,0,0.2)" }}
+                style={{
+                  padding: 16,
+                  borderRadius: 18,
+                  background: "rgba(255,255,255,0.9)",
+                  border: "1px solid rgba(217,119,6,0.2)",
+                  boxShadow: "0 6px 18px rgba(110,100,179,0.06)",
+                }}
               >
-                <h3 style={{ fontSize: 14, fontWeight: 800, color: "#FFD700", marginBottom: 8 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 800, color: C.gold, marginBottom: 8, marginTop: 0 }}>
                   💎 Diamond Tracker
                 </h3>
-                <p style={{ fontSize: 11, color: "rgba(162,155,254,0.5)", marginBottom: 12 }}>
+                <p style={{ fontSize: 11, color: C.textMuted, marginBottom: 12 }}>
                   View user's diamond balance and transaction history
                 </p>
                 <div
                   style={{
                     padding: 12,
                     borderRadius: 12,
-                    background: "rgba(255,215,0,0.04)",
-                    border: "1px solid rgba(255,215,0,0.1)",
+                    background: "rgba(217,119,6,0.06)",
+                    border: "1px solid rgba(217,119,6,0.12)",
                   }}
                 >
-                  <p style={{ fontSize: 18, fontWeight: 900, color: "#FFD700", marginBottom: 8 }}>
+                  <p style={{ fontSize: 18, fontWeight: 900, color: C.gold, marginBottom: 8, marginTop: 0 }}>
                     💎 {(godUser.coins || 0).toLocaleString()} diamonds
                   </p>
-                  <p style={{ fontSize: 11, color: "rgba(162,155,254,0.5)" }}>
+                  <p style={{ fontSize: 11, color: C.textMuted, margin: 0 }}>
                     Level {godUser.level || 1} | XP: {godUser.xp || 0} | VIP:{" "}
                     {godUser.vip ? "Yes" : "No"}
                   </p>
@@ -1606,8 +1796,9 @@ export default function SettingsPage({
                         style={{
                           fontSize: 11,
                           fontWeight: 700,
-                          color: "rgba(255,215,0,0.6)",
+                          color: C.gold,
                           marginBottom: 6,
+                          marginTop: 0,
                         }}
                       >
                         Recent Transactions
@@ -1620,18 +1811,18 @@ export default function SettingsPage({
                             key={i}
                             style={{
                               padding: "6px 0",
-                              borderBottom: "1px solid rgba(255,255,255,0.04)",
+                              borderBottom: `1px solid ${C.divider}`,
                               display: "flex",
                               justifyContent: "space-between",
                               fontSize: 11,
                             }}
                           >
-                            <span style={{ color: "rgba(255,255,255,0.6)" }}>
+                            <span style={{ color: C.textMuted }}>
                               {tx.description || tx.type}
                             </span>
                             <span
                               style={{
-                                color: tx.amount > 0 ? "#00e676" : "#ff5555",
+                                color: tx.amount > 0 ? C.green : C.danger,
                                 fontWeight: 700,
                               }}
                             >
@@ -1646,16 +1837,21 @@ export default function SettingsPage({
               </div>
             )}
 
-            {/* Mass DM Panel */}
+            {/* Mass DM */}
             {godTab === "massDM" && (
               <div
-                className="card"
-                style={{ padding: 16, border: "1px solid rgba(255,165,0,0.2)" }}
+                style={{
+                  padding: 16,
+                  borderRadius: 18,
+                  background: "rgba(255,255,255,0.9)",
+                  border: "1px solid rgba(249,115,22,0.2)",
+                  boxShadow: "0 6px 18px rgba(110,100,179,0.06)",
+                }}
               >
-                <h3 style={{ fontSize: 14, fontWeight: 800, color: "#ffa500", marginBottom: 8 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 800, color: "#ea580c", marginBottom: 8, marginTop: 0 }}>
                   📧 Mass DM
                 </h3>
-                <p style={{ fontSize: 11, color: "rgba(162,155,254,0.5)", marginBottom: 12 }}>
+                <p style={{ fontSize: 11, color: C.textMuted, marginBottom: 12 }}>
                   Send a notification to ALL users
                 </p>
                 <textarea
@@ -1667,9 +1863,9 @@ export default function SettingsPage({
                     width: "100%",
                     padding: "12px 14px",
                     borderRadius: 12,
-                    border: "1px solid rgba(255,165,0,0.2)",
-                    background: "rgba(255,255,255,0.04)",
-                    color: "#fff",
+                    border: "1px solid rgba(249,115,22,0.25)",
+                    background: "#f8fafc",
+                    color: C.text,
                     fontSize: 13,
                     fontFamily: "inherit",
                     outline: "none",
@@ -1681,7 +1877,7 @@ export default function SettingsPage({
                 <p
                   style={{
                     fontSize: 10,
-                    color: "rgba(162,155,254,0.3)",
+                    color: C.textLight,
                     textAlign: "right",
                     marginTop: 4,
                   }}
@@ -1689,14 +1885,16 @@ export default function SettingsPage({
                   {godMassDM.length}/500
                 </p>
                 <button
-                  className="btn btn-full"
                   style={{
                     marginTop: 8,
+                    width: "100%",
                     padding: "12px 0",
-                    background: "rgba(255,165,0,0.15)",
-                    border: "1px solid rgba(255,165,0,0.3)",
-                    color: "#ffa500",
+                    background: "rgba(249,115,22,0.12)",
+                    border: "1px solid rgba(249,115,22,0.3)",
+                    color: "#ea580c",
                     fontWeight: 800,
+                    borderRadius: 12,
+                    cursor: "pointer",
                   }}
                   onClick={async () => {
                     if (!godMassDM.trim()) return;
@@ -1718,16 +1916,21 @@ export default function SettingsPage({
               </div>
             )}
 
-            {/* Maintenance Mode Panel */}
+            {/* Maintenance */}
             {godTab === "maintenance" && (
               <div
-                className="card"
-                style={{ padding: 16, border: "1px solid rgba(255,100,100,0.2)" }}
+                style={{
+                  padding: 16,
+                  borderRadius: 18,
+                  background: "rgba(255,255,255,0.9)",
+                  border: "1px solid rgba(239,68,68,0.15)",
+                  boxShadow: "0 6px 18px rgba(110,100,179,0.06)",
+                }}
               >
-                <h3 style={{ fontSize: 14, fontWeight: 800, color: "#ff6464", marginBottom: 8 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 800, color: C.danger, marginBottom: 8, marginTop: 0 }}>
                   🛠️ Server Maintenance
                 </h3>
-                <p style={{ fontSize: 11, color: "rgba(162,155,254,0.5)", marginBottom: 12 }}>
+                <p style={{ fontSize: 11, color: C.textMuted, marginBottom: 12 }}>
                   Toggle maintenance mode. Non-admin users will see a maintenance screen.
                 </p>
                 <input
@@ -1740,9 +1943,9 @@ export default function SettingsPage({
                     padding: "10px 14px",
                     borderRadius: 12,
                     marginBottom: 12,
-                    border: "1px solid rgba(255,100,100,0.2)",
-                    background: "rgba(255,255,255,0.04)",
-                    color: "#fff",
+                    border: "1px solid rgba(239,68,68,0.25)",
+                    background: "#f8fafc",
+                    color: C.text,
                     fontSize: 13,
                     outline: "none",
                     boxSizing: "border-box",
@@ -1750,14 +1953,15 @@ export default function SettingsPage({
                 />
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
-                    className="btn"
                     style={{
                       flex: 1,
                       padding: "12px 0",
-                      background: "rgba(255,60,60,0.15)",
-                      border: "1px solid rgba(255,60,60,0.3)",
-                      color: "#ff5555",
+                      background: "rgba(239,68,68,0.12)",
+                      border: "1px solid rgba(239,68,68,0.3)",
+                      color: C.danger,
                       fontWeight: 800,
+                      borderRadius: 12,
+                      cursor: "pointer",
                     }}
                     onClick={async () => {
                       setGodLoading(true);
@@ -1774,14 +1978,15 @@ export default function SettingsPage({
                     🛑 Enable
                   </button>
                   <button
-                    className="btn"
                     style={{
                       flex: 1,
                       padding: "12px 0",
-                      background: "rgba(0,230,118,0.12)",
-                      border: "1px solid rgba(0,230,118,0.3)",
-                      color: "#00e676",
+                      background: "rgba(16,185,129,0.12)",
+                      border: "1px solid rgba(16,185,129,0.3)",
+                      color: C.green,
                       fontWeight: 800,
+                      borderRadius: 12,
+                      cursor: "pointer",
                     }}
                     onClick={async () => {
                       setGodLoading(true);
@@ -1801,16 +2006,21 @@ export default function SettingsPage({
               </div>
             )}
 
-            {/* ID Transfer Panel */}
+            {/* ID Transfer */}
             {godTab === "idTransfer" && godUser && (
               <div
-                className="card"
-                style={{ padding: 16, border: "1px solid rgba(0,200,255,0.2)" }}
+                style={{
+                  padding: 16,
+                  borderRadius: 18,
+                  background: "rgba(255,255,255,0.9)",
+                  border: "1px solid rgba(6,182,212,0.2)",
+                  boxShadow: "0 6px 18px rgba(110,100,179,0.06)",
+                }}
               >
-                <h3 style={{ fontSize: 14, fontWeight: 800, color: "#00c8ff", marginBottom: 8 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 800, color: "#0891b2", marginBottom: 8, marginTop: 0 }}>
                   🔄 ID Transfer
                 </h3>
-                <p style={{ fontSize: 11, color: "rgba(162,155,254,0.5)", marginBottom: 12 }}>
+                <p style={{ fontSize: 11, color: C.textMuted, marginBottom: 12 }}>
                   Transfer diamonds, inventory, level & items from this user to another
                 </p>
                 <input
@@ -1823,9 +2033,9 @@ export default function SettingsPage({
                     padding: "10px 14px",
                     borderRadius: 12,
                     marginBottom: 12,
-                    border: "1px solid rgba(0,200,255,0.2)",
-                    background: "rgba(255,255,255,0.04)",
-                    color: "#fff",
+                    border: "1px solid rgba(6,182,212,0.25)",
+                    background: "#f8fafc",
+                    color: C.text,
                     fontSize: 13,
                     fontFamily: "monospace",
                     outline: "none",
@@ -1833,13 +2043,15 @@ export default function SettingsPage({
                   }}
                 />
                 <button
-                  className="btn btn-full"
                   style={{
+                    width: "100%",
                     padding: "12px 0",
-                    background: "rgba(0,200,255,0.15)",
-                    border: "1px solid rgba(0,200,255,0.3)",
-                    color: "#00c8ff",
+                    background: "rgba(6,182,212,0.12)",
+                    border: "1px solid rgba(6,182,212,0.3)",
+                    color: "#0891b2",
                     fontWeight: 800,
+                    borderRadius: 12,
+                    cursor: "pointer",
                   }}
                   onClick={async () => {
                     if (!godTransferTo.trim()) return;
@@ -1848,12 +2060,7 @@ export default function SettingsPage({
                       showToast("Target user not found", "warning");
                       return;
                     }
-                    if (
-                      !confirm(
-                        `Transfer all data from ${godUser.name} to ${target.name}?`
-                      )
-                    )
-                      return;
+                    if (!confirm(`Transfer all data from ${godUser.name} to ${target.name}?`)) return;
                     setGodLoading(true);
                     try {
                       await transferAccountData(godUser.uid, target.uid);
@@ -1870,16 +2077,21 @@ export default function SettingsPage({
               </div>
             )}
 
-            {/* VIP ID Generator Panel */}
+            {/* VIP ID */}
             {godTab === "vipId" && godUser && (
               <div
-                className="card"
-                style={{ padding: 16, border: "1px solid rgba(255,215,0,0.2)" }}
+                style={{
+                  padding: 16,
+                  borderRadius: 18,
+                  background: "rgba(255,255,255,0.9)",
+                  border: "1px solid rgba(217,119,6,0.2)",
+                  boxShadow: "0 6px 18px rgba(110,100,179,0.06)",
+                }}
               >
-                <h3 style={{ fontSize: 14, fontWeight: 800, color: "#FFD700", marginBottom: 8 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 800, color: C.gold, marginBottom: 8, marginTop: 0 }}>
                   👑 VIP ID Generator
                 </h3>
-                <p style={{ fontSize: 11, color: "rgba(162,155,254,0.5)", marginBottom: 12 }}>
+                <p style={{ fontSize: 11, color: C.textMuted, marginBottom: 12 }}>
                   Assign a custom VIP user ID (e.g. "1", "007", "VIP") to a user
                 </p>
                 <input
@@ -1892,9 +2104,9 @@ export default function SettingsPage({
                     padding: "10px 14px",
                     borderRadius: 12,
                     marginBottom: 12,
-                    border: "1px solid rgba(255,215,0,0.2)",
-                    background: "rgba(255,255,255,0.04)",
-                    color: "#fff",
+                    border: "1px solid rgba(217,119,6,0.25)",
+                    background: "#f8fafc",
+                    color: C.text,
                     fontSize: 13,
                     fontFamily: "monospace",
                     outline: "none",
@@ -1902,19 +2114,19 @@ export default function SettingsPage({
                   }}
                 />
                 <button
-                  className="btn btn-full"
                   style={{
+                    width: "100%",
                     padding: "12px 0",
-                    background:
-                      "linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,215,0,0.08))",
-                    border: "1px solid rgba(255,215,0,0.4)",
-                    color: "#FFD700",
+                    background: "linear-gradient(135deg, rgba(217,119,6,0.15), rgba(217,119,6,0.08))",
+                    border: "1px solid rgba(217,119,6,0.35)",
+                    color: C.gold,
                     fontWeight: 800,
+                    borderRadius: 12,
+                    cursor: "pointer",
                   }}
                   onClick={async () => {
                     if (!godVipId.trim()) return;
-                    if (!confirm(`Assign VIP ID "${godVipId.trim()}" to ${godUser.name}?`))
-                      return;
+                    if (!confirm(`Assign VIP ID "${godVipId.trim()}" to ${godUser.name}?`)) return;
                     setGodLoading(true);
                     try {
                       const ok = await createVipUserId(godVipId.trim(), godUser.uid);
@@ -1932,40 +2144,43 @@ export default function SettingsPage({
               </div>
             )}
 
-            {/* Ghost Mode Panel */}
+            {/* Ghost Mode */}
             {godTab === "ghostMode" && (
               <div
-                className="card"
-                style={{ padding: 16, border: "1px solid rgba(150,100,255,0.2)" }}
+                style={{
+                  padding: 16,
+                  borderRadius: 18,
+                  background: "rgba(255,255,255,0.9)",
+                  border: "1px solid rgba(139,92,246,0.2)",
+                  boxShadow: "0 6px 18px rgba(110,100,179,0.06)",
+                }}
               >
-                <h3 style={{ fontSize: 14, fontWeight: 800, color: "#9664ff", marginBottom: 8 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 800, color: C.accent, marginBottom: 8, marginTop: 0 }}>
                   👻 Ghost Mode
                 </h3>
-                <p style={{ fontSize: 11, color: "rgba(162,155,254,0.5)", lineHeight: 1.6, marginBottom: 12 }}>
-                  When enabled, you appear invisible in rooms. Your seat shows empty but you can
-                  still listen and speak.
+                <p style={{ fontSize: 11, color: C.textMuted, lineHeight: 1.6, marginBottom: 12 }}>
+                  When enabled, you appear invisible in rooms.
                 </p>
                 <button
-                  className="btn btn-full"
                   style={{
+                    width: "100%",
                     padding: "14px 0",
                     background: user.ghostMode
-                      ? "rgba(0,230,118,0.12)"
-                      : "rgba(150,100,255,0.15)",
+                      ? "rgba(16,185,129,0.12)"
+                      : "rgba(139,92,246,0.12)",
                     border: user.ghostMode
-                      ? "1px solid rgba(0,230,118,0.3)"
-                      : "1px solid rgba(150,100,255,0.3)",
-                    color: user.ghostMode ? "#00e676" : "#9664ff",
+                      ? "1px solid rgba(16,185,129,0.3)"
+                      : "1px solid rgba(139,92,246,0.3)",
+                    color: user.ghostMode ? C.green : C.accent,
                     fontWeight: 800,
+                    borderRadius: 12,
+                    cursor: "pointer",
                   }}
                   onClick={async () => {
                     setGodLoading(true);
                     try {
                       await updateUser(user.uid, { ghostMode: !user.ghostMode } as any);
-                      showToast(
-                        user.ghostMode ? "Ghost Mode OFF" : "Ghost Mode ON",
-                        "success"
-                      );
+                      showToast(user.ghostMode ? "Ghost Mode OFF" : "Ghost Mode ON", "success");
                     } catch {
                       showToast("Failed", "error");
                     }
@@ -1978,16 +2193,21 @@ export default function SettingsPage({
               </div>
             )}
 
-            {/* Level Booster Panel */}
+            {/* Level Booster */}
             {godTab === "levelBooster" && godUser && (
               <div
-                className="card"
-                style={{ padding: 16, border: "1px solid rgba(100,200,255,0.2)" }}
+                style={{
+                  padding: 16,
+                  borderRadius: 18,
+                  background: "rgba(255,255,255,0.9)",
+                  border: "1px solid rgba(59,130,246,0.2)",
+                  boxShadow: "0 6px 18px rgba(110,100,179,0.06)",
+                }}
               >
-                <h3 style={{ fontSize: 14, fontWeight: 800, color: "#64c8ff", marginBottom: 8 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 800, color: "#2563eb", marginBottom: 8, marginTop: 0 }}>
                   📊 Level Booster
                 </h3>
-                <p style={{ fontSize: 11, color: "rgba(162,155,254,0.5)", marginBottom: 12 }}>
+                <p style={{ fontSize: 11, color: C.textMuted, marginBottom: 12 }}>
                   Set user's level and XP directly
                 </p>
                 <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
@@ -1995,9 +2215,10 @@ export default function SettingsPage({
                     <label
                       style={{
                         fontSize: 10,
-                        color: "rgba(162,155,254,0.4)",
+                        color: C.textMuted,
                         marginBottom: 4,
                         display: "block",
+                        fontWeight: 700,
                       }}
                     >
                       Level
@@ -2010,9 +2231,9 @@ export default function SettingsPage({
                         width: "100%",
                         padding: "10px 14px",
                         borderRadius: 12,
-                        border: "1px solid rgba(100,200,255,0.2)",
-                        background: "rgba(255,255,255,0.04)",
-                        color: "#fff",
+                        border: "1px solid rgba(59,130,246,0.25)",
+                        background: "#f8fafc",
+                        color: C.text,
                         fontSize: 14,
                         fontWeight: 700,
                         outline: "none",
@@ -2024,9 +2245,10 @@ export default function SettingsPage({
                     <label
                       style={{
                         fontSize: 10,
-                        color: "rgba(162,155,254,0.4)",
+                        color: C.textMuted,
                         marginBottom: 4,
                         display: "block",
+                        fontWeight: 700,
                       }}
                     >
                       XP
@@ -2039,9 +2261,9 @@ export default function SettingsPage({
                         width: "100%",
                         padding: "10px 14px",
                         borderRadius: 12,
-                        border: "1px solid rgba(100,200,255,0.2)",
-                        background: "rgba(255,255,255,0.04)",
-                        color: "#fff",
+                        border: "1px solid rgba(59,130,246,0.25)",
+                        background: "#f8fafc",
+                        color: C.text,
                         fontSize: 14,
                         fontWeight: 700,
                         outline: "none",
@@ -2051,13 +2273,15 @@ export default function SettingsPage({
                   </div>
                 </div>
                 <button
-                  className="btn btn-full"
                   style={{
+                    width: "100%",
                     padding: "12px 0",
-                    background: "rgba(100,200,255,0.15)",
-                    border: "1px solid rgba(100,200,255,0.3)",
-                    color: "#64c8ff",
+                    background: "rgba(59,130,246,0.12)",
+                    border: "1px solid rgba(59,130,246,0.3)",
+                    color: "#2563eb",
                     fontWeight: 800,
+                    borderRadius: 12,
+                    cursor: "pointer",
                   }}
                   onClick={async () => {
                     const lv = parseInt(godLevel);
@@ -2084,16 +2308,21 @@ export default function SettingsPage({
               </div>
             )}
 
-            {/* Badge Tool Panel */}
+            {/* Badge Tool */}
             {godTab === "badgeTool" && godUser && (
               <div
-                className="card"
-                style={{ padding: 16, border: "1px solid rgba(255,150,0,0.2)" }}
+                style={{
+                  padding: 16,
+                  borderRadius: 18,
+                  background: "rgba(255,255,255,0.9)",
+                  border: "1px solid rgba(217,119,6,0.2)",
+                  boxShadow: "0 6px 18px rgba(110,100,179,0.06)",
+                }}
               >
-                <h3 style={{ fontSize: 14, fontWeight: 800, color: "#ff9600", marginBottom: 8 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 800, color: "#ea580c", marginBottom: 8, marginTop: 0 }}>
                   🎖️ Custom Badge Tool
                 </h3>
-                <p style={{ fontSize: 11, color: "rgba(162,155,254,0.5)", marginBottom: 12 }}>
+                <p style={{ fontSize: 11, color: C.textMuted, marginBottom: 12 }}>
                   Add or remove custom badges for this user
                 </p>
                 {godUser.customBadges && Object.keys(godUser.customBadges).length > 0 && (
@@ -2102,8 +2331,9 @@ export default function SettingsPage({
                       style={{
                         fontSize: 11,
                         fontWeight: 700,
-                        color: "rgba(255,150,0,0.6)",
+                        color: "#ea580c",
                         marginBottom: 6,
+                        marginTop: 0,
                       }}
                     >
                       Current Badges:
@@ -2118,12 +2348,12 @@ export default function SettingsPage({
                             gap: 4,
                             padding: "4px 10px",
                             borderRadius: 8,
-                            background: "rgba(255,150,0,0.08)",
-                            border: "1px solid rgba(255,150,0,0.15)",
+                            background: "rgba(217,119,6,0.08)",
+                            border: "1px solid rgba(217,119,6,0.18)",
                           }}
                         >
                           <span style={{ fontSize: 14 }}>{b.icon}</span>
-                          <span style={{ fontSize: 11, color: "#ff9600" }}>{b.name}</span>
+                          <span style={{ fontSize: 11, color: "#ea580c" }}>{b.name}</span>
                           <button
                             onClick={async () => {
                               await removeCustomBadge(godUser.uid, b.id);
@@ -2136,7 +2366,7 @@ export default function SettingsPage({
                               background: "none",
                               border: "none",
                               cursor: "pointer",
-                              color: "#ff5555",
+                              color: C.danger,
                               fontSize: 12,
                               padding: 0,
                               marginLeft: 4,
@@ -2154,16 +2384,16 @@ export default function SettingsPage({
                     type="text"
                     value={godBadgeIcon}
                     onChange={(e) => setGodBadgeIcon(e.target.value)}
-                    placeholder="Emoji..."
+                    placeholder="Emoji"
                     maxLength={4}
                     style={{
                       width: 60,
                       padding: "10px",
                       borderRadius: 12,
                       textAlign: "center",
-                      border: "1px solid rgba(255,150,0,0.2)",
-                      background: "rgba(255,255,255,0.04)",
-                      color: "#fff",
+                      border: "1px solid rgba(217,119,6,0.25)",
+                      background: "#f8fafc",
+                      color: C.text,
                       fontSize: 18,
                       outline: "none",
                     }}
@@ -2177,22 +2407,24 @@ export default function SettingsPage({
                       flex: 1,
                       padding: "10px 14px",
                       borderRadius: 12,
-                      border: "1px solid rgba(255,150,0,0.2)",
-                      background: "rgba(255,255,255,0.04)",
-                      color: "#fff",
+                      border: "1px solid rgba(217,119,6,0.25)",
+                      background: "#f8fafc",
+                      color: C.text,
                       fontSize: 13,
                       outline: "none",
                     }}
                   />
                 </div>
                 <button
-                  className="btn btn-full"
                   style={{
+                    width: "100%",
                     padding: "12px 0",
-                    background: "rgba(255,150,0,0.15)",
-                    border: "1px solid rgba(255,150,0,0.3)",
-                    color: "#ff9600",
+                    background: "rgba(217,119,6,0.12)",
+                    border: "1px solid rgba(217,119,6,0.3)",
+                    color: "#ea580c",
                     fontWeight: 800,
+                    borderRadius: 12,
+                    cursor: "pointer",
                   }}
                   onClick={async () => {
                     if (!godBadgeName.trim() || !godBadgeIcon.trim()) return;
@@ -2224,27 +2456,33 @@ export default function SettingsPage({
               </div>
             )}
 
-            {/* Anti-Screenshot Panel */}
+            {/* Anti-Screenshot */}
             {godTab === "antiScreenshot" && (
               <div
-                className="card"
-                style={{ padding: 16, border: "1px solid rgba(255,100,100,0.2)" }}
+                style={{
+                  padding: 16,
+                  borderRadius: 18,
+                  background: "rgba(255,255,255,0.9)",
+                  border: "1px solid rgba(239,68,68,0.2)",
+                  boxShadow: "0 6px 18px rgba(110,100,179,0.06)",
+                }}
               >
-                <h3 style={{ fontSize: 14, fontWeight: 800, color: "#ff6464", marginBottom: 8 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 800, color: C.danger, marginBottom: 8, marginTop: 0 }}>
                   🛡️ Anti-Screenshot
                 </h3>
-                <p style={{ fontSize: 11, color: "rgba(162,155,254,0.5)", lineHeight: 1.6, marginBottom: 12 }}>
-                  This feature adds a CSS overlay that makes screenshots harder by applying a
-                  visual watermark pattern over the entire app.
+                <p style={{ fontSize: 11, color: C.textMuted, lineHeight: 1.6, marginBottom: 12 }}>
+                  This feature adds a CSS overlay that makes screenshots harder.
                 </p>
                 <button
-                  className="btn btn-full"
                   style={{
+                    width: "100%",
                     padding: "14px 0",
-                    background: "rgba(255,100,100,0.12)",
-                    border: "1px solid rgba(255,100,100,0.3)",
-                    color: "#ff6464",
+                    background: "rgba(239,68,68,0.12)",
+                    border: "1px solid rgba(239,68,68,0.3)",
+                    color: C.danger,
                     fontWeight: 800,
+                    borderRadius: 12,
+                    cursor: "pointer",
                   }}
                   onClick={() => {
                     const el = document.getElementById("anti-ss-overlay");
@@ -2266,45 +2504,52 @@ export default function SettingsPage({
               </div>
             )}
 
-            {/* Vanish Chat Panel */}
+            {/* Vanish Chat */}
             {godTab === "vanishChat" && (
               <div
-                className="card"
-                style={{ padding: 16, border: "1px solid rgba(200,100,255,0.2)" }}
+                style={{
+                  padding: 16,
+                  borderRadius: 18,
+                  background: "rgba(255,255,255,0.9)",
+                  border: "1px solid rgba(168,85,247,0.2)",
+                  boxShadow: "0 6px 18px rgba(110,100,179,0.06)",
+                }}
               >
-                <h3 style={{ fontSize: 14, fontWeight: 800, color: "#c864ff", marginBottom: 8 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 800, color: "#a855f7", marginBottom: 8, marginTop: 0 }}>
                   💨 Vanish Chat
                 </h3>
-                <p style={{ fontSize: 11, color: "rgba(162,155,254,0.5)", lineHeight: 1.6, marginBottom: 12 }}>
+                <p style={{ fontSize: 11, color: C.textMuted, lineHeight: 1.6, marginBottom: 12 }}>
                   Clear all messages in a specific room. Enter Room ID to wipe the chat history.
                 </p>
-                <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-                  <input
-                    type="text"
-                    value={godUserId}
-                    onChange={(e) => setGodUserId(e.target.value)}
-                    placeholder="Enter Room ID..."
-                    style={{
-                      flex: 1,
-                      padding: "10px 14px",
-                      borderRadius: 12,
-                      border: "1px solid rgba(200,100,255,0.2)",
-                      background: "rgba(255,255,255,0.04)",
-                      color: "#fff",
-                      fontSize: 13,
-                      fontFamily: "monospace",
-                      outline: "none",
-                    }}
-                  />
-                </div>
-                <button
-                  className="btn btn-full"
+                <input
+                  type="text"
+                  value={godUserId}
+                  onChange={(e) => setGodUserId(e.target.value)}
+                  placeholder="Enter Room ID..."
                   style={{
+                    width: "100%",
+                    padding: "10px 14px",
+                    borderRadius: 12,
+                    border: "1px solid rgba(168,85,247,0.25)",
+                    background: "#f8fafc",
+                    color: C.text,
+                    fontSize: 13,
+                    fontFamily: "monospace",
+                    outline: "none",
+                    marginBottom: 12,
+                    boxSizing: "border-box",
+                  }}
+                />
+                <button
+                  style={{
+                    width: "100%",
                     padding: "12px 0",
-                    background: "rgba(200,100,255,0.15)",
-                    border: "1px solid rgba(200,100,255,0.3)",
-                    color: "#c864ff",
+                    background: "rgba(168,85,247,0.12)",
+                    border: "1px solid rgba(168,85,247,0.3)",
+                    color: "#a855f7",
                     fontWeight: 800,
+                    borderRadius: 12,
+                    cursor: "pointer",
                   }}
                   onClick={async () => {
                     if (!godUserId.trim()) return;
@@ -2325,66 +2570,63 @@ export default function SettingsPage({
               </div>
             )}
 
-            {/* IP Tracker Panel */}
+            {/* IP Tracker */}
             {godTab === "ipTracker" && godUser && (
               <div
-                className="card"
-                style={{ padding: 16, border: "1px solid rgba(100,200,150,0.2)" }}
+                style={{
+                  padding: 16,
+                  borderRadius: 18,
+                  background: "rgba(255,255,255,0.9)",
+                  border: "1px solid rgba(16,185,129,0.2)",
+                  boxShadow: "0 6px 18px rgba(110,100,179,0.06)",
+                }}
               >
-                <h3 style={{ fontSize: 14, fontWeight: 800, color: "#64c896", marginBottom: 8 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 800, color: C.green, marginBottom: 8, marginTop: 0 }}>
                   🌐 IP Tracker
                 </h3>
-                <p style={{ fontSize: 11, color: "rgba(162,155,254,0.5)", lineHeight: 1.6, marginBottom: 12 }}>
-                  View device and connection info for users. This data is collected when users log
-                  in.
+                <p style={{ fontSize: 11, color: C.textMuted, lineHeight: 1.6, marginBottom: 12 }}>
+                  View device and connection info for users.
                 </p>
                 <div
                   style={{
                     padding: 12,
                     borderRadius: 12,
-                    background: "rgba(100,200,150,0.04)",
-                    border: "1px solid rgba(100,200,150,0.1)",
+                    background: "rgba(16,185,129,0.05)",
+                    border: "1px solid rgba(16,185,129,0.12)",
                   }}
                 >
-                  <div style={{ display: "grid", gap: 8 }}>
+                  <div style={{ display: "grid", gap: 10 }}>
                     <div>
-                      <span style={{ fontSize: 10, color: "rgba(162,155,254,0.4)" }}>
-                        Device ID:
-                      </span>
-                      <p style={{ fontSize: 12, fontFamily: "monospace", color: "#64c896" }}>
+                      <span style={{ fontSize: 10, color: C.textMuted, fontWeight: 700 }}>Device ID:</span>
+                      <p style={{ fontSize: 12, fontFamily: "monospace", color: C.green, margin: "2px 0 0" }}>
                         {godUser.deviceId || "Not recorded"}
                       </p>
                     </div>
                     <div>
-                      <span style={{ fontSize: 10, color: "rgba(162,155,254,0.4)" }}>
-                        User Agent:
-                      </span>
+                      <span style={{ fontSize: 10, color: C.textMuted, fontWeight: 700 }}>User Agent:</span>
                       <p
                         style={{
                           fontSize: 11,
                           fontFamily: "monospace",
-                          color: "rgba(255,255,255,0.6)",
+                          color: C.text,
                           wordBreak: "break-all",
+                          margin: "2px 0 0",
                         }}
                       >
                         {(godUser as any).userAgent || "Not recorded"}
                       </p>
                     </div>
                     <div>
-                      <span style={{ fontSize: 10, color: "rgba(162,155,254,0.4)" }}>
-                        Last Login:
-                      </span>
-                      <p style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>
+                      <span style={{ fontSize: 10, color: C.textMuted, fontWeight: 700 }}>Last Login:</span>
+                      <p style={{ fontSize: 12, color: C.text, margin: "2px 0 0" }}>
                         {(godUser as any).lastLoginAt
                           ? new Date((godUser as any).lastLoginAt).toLocaleString()
                           : "Unknown"}
                       </p>
                     </div>
                     <div>
-                      <span style={{ fontSize: 10, color: "rgba(162,155,254,0.4)" }}>
-                        Account Created:
-                      </span>
-                      <p style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>
+                      <span style={{ fontSize: 10, color: C.textMuted, fontWeight: 700 }}>Account Created:</span>
+                      <p style={{ fontSize: 12, color: C.text, margin: "2px 0 0" }}>
                         {(godUser as any).createdAt
                           ? new Date((godUser as any).createdAt).toLocaleString()
                           : "Unknown"}
